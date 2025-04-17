@@ -477,14 +477,14 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
                 <canvas 
                   ref={colorGradientRef} 
                   width={200} 
-                  height={180} 
+                  height={240} 
                   onClick={handleGradientClick}
                   className="cursor-crosshair border border-gray-300 rounded-md"
                 />
                 <canvas 
                   ref={grayscaleRef} 
                   width={30} 
-                  height={180} 
+                  height={240} 
                   onClick={handleGrayscaleClick}
                   className="cursor-pointer border border-gray-300 rounded-md"
                 />
