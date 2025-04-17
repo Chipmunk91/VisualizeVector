@@ -55,7 +55,7 @@ export const COLOR_PALETTE_PASTEL = [
   "#E6E6FF", // Pastel Blue
   "#F9E6FF", // Pastel Purple
   "#FFE6FF", // Pastel Magenta
-  "#FFE6FF", // Pastel Pink
+  "#FFCCE6", // Pastel Pink
 ];
 
 /**
