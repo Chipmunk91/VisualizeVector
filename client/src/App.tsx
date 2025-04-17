@@ -84,10 +84,10 @@ function App() {
   }, [showTransformed, nonTransformedVectorsHash, matrixHash, clearTransformedVectors, setTransformedVectors, vectors, matrix]);
 
   return (
-    <div className="flex h-screen w-screen bg-background text-foreground">
+    <div className="flex flex-col md:flex-row h-screen w-screen bg-background text-foreground">
       {/* Left Panel - Matrix Input */}
       <div 
-        className={`${showLeftPanel ? 'w-full sm:w-1/3 md:w-1/4 min-w-0 sm:min-w-[250px]' : 'w-0'} transition-all duration-300 h-full bg-card border-r border-border overflow-y-auto overflow-x-hidden`}
+        className={`${showLeftPanel ? 'w-full h-1/3 md:h-full sm:w-1/3 md:w-1/4 min-w-0 sm:min-w-[250px]' : 'w-0 h-0 md:h-full'} transition-all duration-300 bg-card border-r border-border overflow-y-auto overflow-x-hidden`}
       >
         {showLeftPanel && (
           <Suspense fallback={<div className="p-4">Loading Matrix controls...</div>}>
@@ -97,7 +97,7 @@ function App() {
       </div>
 
       {/* Center - 3D Visualization */}
-      <div className="flex-1 flex flex-col h-full relative">
+      <div className="flex-1 flex flex-col md:h-full h-1/3 relative">
         {/* Top Controls */}
         <div className="absolute top-2 right-2 z-10 flex flex-col sm:flex-row gap-2">
           <button
@@ -147,7 +147,7 @@ function App() {
 
       {/* Right Panel - Vector Input */}
       <div 
-        className={`${showRightPanel ? 'w-1/4 min-w-[250px]' : 'w-0'} transition-all duration-300 h-full bg-card border-l border-border overflow-y-auto overflow-x-hidden`}
+        className={`${showRightPanel ? 'w-full h-1/3 md:h-full sm:w-1/3 md:w-1/4 min-w-0 sm:min-w-[250px]' : 'w-0 h-0 md:h-full'} transition-all duration-300 bg-card border-l border-border overflow-y-auto overflow-x-hidden`}
       >
         {showRightPanel && (
           <Suspense fallback={<div className="p-4">Loading Vector controls...</div>}>
