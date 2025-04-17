@@ -33,10 +33,18 @@ function App() {
   // Track last input hash with a ref instead of DOM attribute
   const lastTransformHashRef = useRef('');
   
+  // Track whether we've processed the initial transform state
+  const initialProcessRef = useRef(false);
+  
   // Process matrix transformations with better loop protection
   useLayoutEffect(() => {
+    // Always log current showTransformed state for debugging
+    console.log("ShowTransformed state:", showTransformed);
+    
     // Skip if transformations are disabled
     if (!showTransformed) {
+      // Only clear if we're changing from true to false
+      console.log("Show transformed disabled, clearing transformed vectors");
       clearTransformedVectors();
       return;
     }

@@ -82,9 +82,18 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
   },
   
   toggleShowTransformed: () => {
-    set((state) => ({
-      showTransformed: !state.showTransformed,
-    }));
+    // Log for debugging
+    console.log("Toggle show transformed called");
+    
+    // Get current state first
+    const currentState = useMatrixStore.getState();
+    const newValue = !currentState.showTransformed;
+    
+    // Set new state
+    set({ showTransformed: newValue });
+    
+    // Log new state
+    console.log("Show transformed toggled to:", newValue);
   },
   
   transposeMatrix: () => {
