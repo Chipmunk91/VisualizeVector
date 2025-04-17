@@ -60,62 +60,73 @@ const Vector = ({ vector }: VectorProps) => {
   
   // Implement drag functionality
   const dragBind = useDrag(
-    ({ active, xy: [x, y], initial: [x0, y0], event, memo = camera.position.clone() }) => {
+    ({ active, xy: [x, y], initial: [x0, y0], event, memo = { 
+      cameraPos: camera.position.clone(),
+      initialComponents: [...components]
+    }}) => {
       if (!isDraggable) return memo;
       
       if (event) event.stopPropagation();
       setIsDragging(active);
       
       if (active && arrowHeadRef.current) {
-        // Create a working plane based on camera position and origin
-        const origin = new THREE.Vector3(0, 0, 0);
-        const cameraDirection = new THREE.Vector3().subVectors(origin, camera.position).normalize();
-        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(cameraDirection, origin);
-        
-        // Create raycasters for initial and current mouse positions
-        const initialMouse = new THREE.Vector2(
-          (x0 / size.width) * 2 - 1,
-          -(y0 / size.height) * 2 + 1
-        );
-        const currentMouse = new THREE.Vector2(
-          (x / size.width) * 2 - 1,
-          -(y / size.height) * 2 + 1
-        );
-        
-        // Get initial intersection
-        raycaster.setFromCamera(initialMouse, camera);
-        const initialIntersection = new THREE.Vector3();
-        raycaster.ray.intersectPlane(plane, initialIntersection);
-        
-        // Get current intersection
-        raycaster.setFromCamera(currentMouse, camera);
-        const currentIntersection = new THREE.Vector3();
-        raycaster.ray.intersectPlane(plane, currentIntersection);
-        
-        if (initialIntersection && currentIntersection) {
-          // Calculate offset in world coordinates
-          const worldMovement = new THREE.Vector3().subVectors(
-            currentIntersection,
-            initialIntersection
+        try {
+          // Use a drag plane that's aligned with the screen for more intuitive control
+          // First, create a plane that's perpendicular to the camera view
+          const viewPlaneNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion);
+          
+          // Create a plane containing the vector endpoint and facing the camera
+          const dragPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            viewPlaneNormal,
+            end.clone()
           );
           
-          // Apply movement with proper scaling for intuitive control
-          let newComponents;
-          if (components.length === 2) {
-            newComponents = [
-              components[0] + worldMovement.x,
-              components[1] + worldMovement.y
-            ];
-          } else {
-            newComponents = [
-              components[0] + worldMovement.x,
-              components[1] + worldMovement.y,
-              components[2] + worldMovement.z
-            ];
-          }
+          // Create raycasters for initial and current mouse positions
+          const initialMouse = new THREE.Vector2(
+            (x0 / size.width) * 2 - 1,
+            -(y0 / size.height) * 2 + 1
+          );
+          const currentMouse = new THREE.Vector2(
+            (x / size.width) * 2 - 1,
+            -(y / size.height) * 2 + 1
+          );
           
-          // Update vector in store
-          updateVector(vector.id, newComponents);
+          // Get the 3D points where the rays intersect the drag plane
+          raycaster.setFromCamera(initialMouse, camera);
+          const initialPoint = new THREE.Vector3();
+          raycaster.ray.intersectPlane(dragPlane, initialPoint);
+          
+          raycaster.setFromCamera(currentMouse, camera);
+          const currentPoint = new THREE.Vector3();
+          raycaster.ray.intersectPlane(dragPlane, currentPoint);
+          
+          if (initialPoint && currentPoint) {
+            // Calculate movement in world space
+            const worldMovement = new THREE.Vector3().subVectors(
+              currentPoint,
+              initialPoint
+            );
+            
+            // Apply movement - use the memorized initial components to avoid drift
+            let newComponents;
+            if (memo.initialComponents.length === 2) {
+              newComponents = [
+                memo.initialComponents[0] + worldMovement.x,
+                memo.initialComponents[1] + worldMovement.y
+              ];
+            } else {
+              newComponents = [
+                memo.initialComponents[0] + worldMovement.x,
+                memo.initialComponents[1] + worldMovement.y,
+                memo.initialComponents[2] + worldMovement.z
+              ];
+            }
+            
+            // Update vector in store
+            updateVector(vector.id, newComponents);
+          }
+        } catch (error) {
+          console.error("Error during drag operation:", error);
         }
       }
       
@@ -185,13 +196,13 @@ const Vector = ({ vector }: VectorProps) => {
         onPointerEnter={() => isDraggable && setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
-        <coneGeometry args={[0.15, 0.4, 16]} />
+        <coneGeometry args={[hovered && isDraggable ? 0.18 : 0.15, 0.4, 16]} />
         <meshStandardMaterial 
-          color={isDragging ? new THREE.Color(0xffffff) : threeColor}
+          color={isDragging ? new THREE.Color(0xffffff) : (hovered && isDraggable ? new THREE.Color(0xffffff) : threeColor)}
           opacity={opacity}
           transparent={isTransformed}
-          emissive={isDragging ? threeColor : undefined}
-          emissiveIntensity={isDragging ? 0.5 : 0}
+          emissive={isDragging || (hovered && isDraggable) ? threeColor : undefined}
+          emissiveIntensity={isDragging ? 0.7 : (hovered && isDraggable ? 0.5 : 0)}
         />
       </mesh>
       
