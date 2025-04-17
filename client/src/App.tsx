@@ -34,7 +34,11 @@ function App() {
   useLayoutEffect(() => {
     // Skip if transformations are disabled
     if (!showTransformed) {
-      clearTransformedVectors();
+      // Add a small delay before clearing transformed vectors
+      // This helps prevent the UI from freezing
+      setTimeout(() => {
+        clearTransformedVectors();
+      }, 10);
       return;
     }
     

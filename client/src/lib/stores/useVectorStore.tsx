@@ -212,21 +212,31 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   clearTransformedVectors: () => {
     try {
-      set((state) => {
-        // Make a copy of the state to avoid reference issues
-        const filteredVectors = [...state.vectors].filter(v => !v.isTransformed);
-        
-        // Return a new state object
-        return {
-          vectors: filteredVectors
-        };
+      console.log("Clearing transformed vectors");
+      
+      // Get the current state safely
+      const currentState = useVectorStore.getState();
+      
+      // Filter to keep only non-transformed vectors
+      const filteredVectors = currentState.vectors
+        .filter(v => !v.isTransformed);
+      
+      // Update the state with a clean approach
+      set({
+        vectors: filteredVectors
       });
+      
+      console.log("Transformed vectors cleared, remaining vectors:", filteredVectors.length);
     } catch (error) {
       console.error("Error in clearTransformedVectors:", error);
-      // If error occurs, set an empty array to recover
-      set((state) => {
-        const safeVectors = state.vectors.filter(v => !v.isTransformed);
-        return { vectors: safeVectors || [] };
+      
+      // If error occurs, get a fresh state and filter again
+      const freshState = useVectorStore.getState();
+      const safeVectors = freshState.vectors.filter(v => !v.isTransformed);
+      
+      // Set state with safe vectors
+      set({
+        vectors: safeVectors
       });
     }
   }
