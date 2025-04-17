@@ -1,17 +1,47 @@
 import { useThree } from "@react-three/fiber";
-import { useEffect } from "react";
-import { useVectorStore } from "../lib/stores/useVectorStore";
+import { useEffect, useState } from "react";
+import { useVectorStore, Vector as VectorType } from "../lib/stores/useVectorStore";
 import Grid from "./Grid";
 import Axis from "./Axis";
 import Vector from "./Vector";
 
+// Default vectors that will always be shown for testing
+const defaultVectors: VectorType[] = [
+  {
+    id: "default-x",
+    components: [3, 0, 0],
+    color: "#FF0000",
+    label: "X",
+    visible: true,
+    isTransformed: false
+  },
+  {
+    id: "default-y",
+    components: [0, 3, 0],
+    color: "#00FF00",
+    label: "Y",
+    visible: true,
+    isTransformed: false
+  },
+  {
+    id: "default-z",
+    components: [0, 0, 3],
+    color: "#0000FF",
+    label: "Z",
+    visible: true,
+    isTransformed: false
+  }
+];
+
 const VectorScene = () => {
   const { vectors } = useVectorStore();
   const { camera } = useThree();
+  const [allVectors, setAllVectors] = useState<VectorType[]>([...defaultVectors]);
   
-  // Debug logging
+  // Combine user vectors with default vectors
   useEffect(() => {
     console.log("Rendering VectorScene with vectors:", vectors);
+    setAllVectors([...defaultVectors, ...vectors]);
   }, [vectors]);
   
   // Adjust camera to show all vectors
@@ -60,8 +90,14 @@ const VectorScene = () => {
       <Grid size={10} divisions={10} />
       <Axis />
       
-      {/* Render all visible vectors */}
-      {vectors.filter(v => v.visible).map((vector) => (
+      {/* Debug sphere at origin */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[0.2, 32, 32]} />
+        <meshStandardMaterial color="#FFFFFF" />
+      </mesh>
+      
+      {/* Render all visible vectors (including defaults) */}
+      {allVectors.filter(v => v.visible).map((vector) => (
         <Vector 
           key={vector.id} 
           vector={vector} 

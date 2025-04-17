@@ -6,10 +6,16 @@ import { useEffect } from "react";
 const Controls = () => {
   const { camera, gl } = useThree();
   
-  // Adjust default control settings
+  // Set initial camera position on mount
   useEffect(() => {
-    // Ensure camera stays focused on origin
+    console.log("Setting initial camera position");
+    
+    // Position for good viewing angle of 3D space
+    camera.position.set(8, 8, 8);
     camera.lookAt(0, 0, 0);
+    
+    // Log camera position for debugging
+    console.log("Camera position:", camera.position);
   }, [camera]);
 
   return (
@@ -17,11 +23,11 @@ const Controls = () => {
       args={[camera, gl.domElement]}
       enableDamping={true}
       dampingFactor={0.05}
-      rotateSpeed={0.5}
-      zoomSpeed={0.5}
-      panSpeed={0.5}
-      minDistance={2}
-      maxDistance={20}
+      rotateSpeed={0.8}
+      zoomSpeed={0.8}
+      panSpeed={0.8}
+      minDistance={1}
+      maxDistance={50}
       makeDefault
     />
   );

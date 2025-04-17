@@ -51,54 +51,48 @@ const Vector = ({ vector }: VectorProps) => {
   
   return (
     <group>
-      {/* Arrow line */}
-      <line>
-        <bufferGeometry attach="geometry">
-          <bufferAttribute
-            attach="attributes-position"
-            count={2}
-            array={new Float32Array([start.x, start.y, start.z, end.x, end.y, end.z])}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial 
-          attach="material" 
-          color={threeColor} 
-          linewidth={lineWidth} 
+      {/* Visible cylinder for the arrow line */}
+      <mesh
+        position={midPoint}
+        scale={[0.05, arrowLength, 0.05]}
+        rotation={arrowDirection.x || arrowDirection.z ? 
+          new THREE.Euler().setFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0), 
+              arrowDirection
+            )
+          ) 
+          : new THREE.Euler(0, 0, 0)}
+      >
+        <cylinderGeometry args={[1, 1, 1, 16]} />
+        <meshStandardMaterial 
+          color={threeColor}
           opacity={opacity}
           transparent={isTransformed}
         />
-      </line>
+      </mesh>
       
-      {/* Arrow head (cone) */}
-      <mesh 
-        position={end}
-        rotation={arrowDirection.x || arrowDirection.z ? new THREE.Euler().setFromQuaternion(
-          new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), 
-            arrowDirection
-          )
-        ) : undefined}
-      >
-        <coneGeometry args={[arrowHeadSize, arrowHeadSize * 2, 8]} />
+      {/* Large sphere at the end point */}
+      <mesh position={end}>
+        <sphereGeometry args={[0.15, 16, 16]} />
         <meshStandardMaterial 
-          color={threeColor} 
-          opacity={opacity} 
+          color={threeColor}
+          opacity={opacity}
           transparent={isTransformed}
         />
       </mesh>
       
-      {/* Vector label - simplified without text for now */}
-      <mesh position={midPoint}>
-        <sphereGeometry args={[0.05, 16, 16]} />
-        <meshStandardMaterial color={vector.color} />
+      {/* Small sphere at the origin */}
+      <mesh position={start}>
+        <sphereGeometry args={[0.08, 16, 16]} />
+        <meshStandardMaterial 
+          color={threeColor}
+          opacity={opacity * 0.7}
+          transparent={true}
+        />
       </mesh>
       
-      {/* Arrow head (cone) at end point */}
-      <mesh position={end}>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshStandardMaterial color={vector.color} />
-      </mesh>
+      {/* Debug info in useEffect */}
     </group>
   );
 };
