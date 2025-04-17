@@ -32,20 +32,10 @@ function App() {
   
   // Process matrix transformations with better loop protection
   useLayoutEffect(() => {
-    // Skip if transformations are disabled - handled in matrix store now
+    // Skip if transformations are disabled
     if (!showTransformed) {
+      clearTransformedVectors();
       return;
-    }
-    
-    // Use try/catch for safety
-    try {
-      // Force recalculation when toggling showTransformed back on
-      // Reset the stored hash to trigger recalculation
-      if (showTransformed) {
-        document.body.removeAttribute('data-last-transform-hash');
-      }
-    } catch (error) {
-      console.error("Error in transformation effect:", error);
     }
     
     // Get only original vectors
@@ -72,32 +62,24 @@ function App() {
     try {
       // Calculate transformations
       const transformedVectors = [];
-      const [matrixRows, matrixCols] = matrix.dimension.split('x').map(Number);
       
       for (const vector of originalVectors) {
-        // Check if matrix and vector dimensions are compatible
-        const isCompatible = 
-          (matrixCols === 2 && vector.components.length === 2) || 
-          (matrixCols === 3 && vector.components.length === 3);
-        
-        if (isCompatible) {
-          const transformed = applyMatrixTransformation(matrix, vector);
-          if (transformed) {
-            transformedVectors.push(transformed);
-          }
+        const transformed = applyMatrixTransformation(matrix, vector);
+        if (transformed) {
+          transformedVectors.push(transformed);
         }
       }
       
       // Only update if we have transformations to add
-      // Important: Use originalVectors as first parameter
-      setTransformedVectors(originalVectors, transformedVectors);
-      
-      // Store the current hash to prevent infinite loops
-      document.body.setAttribute('data-last-transform-hash', currentInputHash);
+      if (transformedVectors.length > 0) {
+        // Important: Use originalVectors as first parameter
+        setTransformedVectors(originalVectors, transformedVectors);
+        
+        // Store the current hash to prevent infinite loops
+        document.body.setAttribute('data-last-transform-hash', currentInputHash);
+      }
     } catch (error) {
       console.error("Error applying matrix transformations:", error);
-      // Clear transformed vectors on error
-      clearTransformedVectors();
     }
   }, [showTransformed, nonTransformedVectorsHash, matrixHash, clearTransformedVectors, setTransformedVectors, vectors, matrix]);
 

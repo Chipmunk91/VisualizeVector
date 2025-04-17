@@ -29,57 +29,23 @@ export const useVectorStore = create<VectorStore>((set) => ({
   vectors: [],
   
   addVector: (components) => {
-    try {
-      const id = `vector-${Date.now()}`;
-      
-      // Find the next available vector number
-      // Get all original vectors (not transformed)
-      const originalVectors = useVectorStore.getState().vectors.filter(v => !v.isTransformed);
-      
-      // Extract existing vector numbers from labels like "v1", "v2"
-      const usedNumbers = new Set<number>();
-      originalVectors.forEach(v => {
-        const match = v.label.match(/^v(\d+)$/);
-        if (match) {
-          usedNumbers.add(parseInt(match[1], 10));
-        }
-      });
-      
-      // Find the lowest unused number
-      let vectorNumber = 1;
-      while (usedNumbers.has(vectorNumber)) {
-        vectorNumber++;
-      }
-      
-      const newVector: Vector = {
-        id,
-        components,
-        color: getRandomColor(),
-        label: `v${vectorNumber}`,
-        visible: true,
-        isTransformed: false,
-      };
-      
-      console.log("Adding new vector to store:", newVector);
-      
-      // Get a clean copy of the current state
-      const currentVectors = [...useVectorStore.getState().vectors];
-      
-      // Add the new vector to the clean copy
-      const updatedVectors = [...currentVectors, newVector];
-      
-      // Update the state with the clean copy
-      set({
-        vectors: updatedVectors
-      });
-      
-      console.log("Vector added, store now has vectors:", useVectorStore.getState().vectors);
-      
-      // Force recalculation of transformations (if enabled)
-      document.body.removeAttribute('data-last-transform-hash');
-    } catch (error) {
-      console.error("Error in addVector:", error);
-    }
+    const id = `vector-${Date.now()}`;
+    const newVector: Vector = {
+      id,
+      components,
+      color: getRandomColor(),
+      label: `Vector${components.length}`,
+      visible: true,
+      isTransformed: false,
+    };
+    
+    console.log("Adding new vector to store:", newVector);
+    
+    set((state) => ({
+      vectors: [...state.vectors, newVector]
+    }));
+    
+    console.log("Vector added, store now has vectors:", useVectorStore.getState().vectors);
   },
   
   removeVector: (id) => {
@@ -226,31 +192,21 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   clearTransformedVectors: () => {
     try {
-      console.log("Clearing transformed vectors");
-      
-      // Get the current state safely
-      const currentState = useVectorStore.getState();
-      
-      // Filter to keep only non-transformed vectors
-      const filteredVectors = currentState.vectors
-        .filter(v => !v.isTransformed);
-      
-      // Update the state with a clean approach
-      set({
-        vectors: filteredVectors
+      set((state) => {
+        // Make a copy of the state to avoid reference issues
+        const filteredVectors = [...state.vectors].filter(v => !v.isTransformed);
+        
+        // Return a new state object
+        return {
+          vectors: filteredVectors
+        };
       });
-      
-      console.log("Transformed vectors cleared, remaining vectors:", filteredVectors.length);
     } catch (error) {
       console.error("Error in clearTransformedVectors:", error);
-      
-      // If error occurs, get a fresh state and filter again
-      const freshState = useVectorStore.getState();
-      const safeVectors = freshState.vectors.filter(v => !v.isTransformed);
-      
-      // Set state with safe vectors
-      set({
-        vectors: safeVectors
+      // If error occurs, set an empty array to recover
+      set((state) => {
+        const safeVectors = state.vectors.filter(v => !v.isTransformed);
+        return { vectors: safeVectors || [] };
       });
     }
   }

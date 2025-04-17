@@ -57,9 +57,8 @@ const Vector = ({ vector }: VectorProps) => {
   const arrowHeadSize = isTransformed ? 0.13 : 0.15;
   const lineWidth = isTransformed ? 0.04 : 0.05;
   
-  // Prevent dragging for transformed vectors and default axis vectors
-  const isAxisVector = vector.id === "default-x" || vector.id === "default-y" || vector.id === "default-z";
-  const isDraggable = !isTransformed && !isAxisVector;
+  // Prevent dragging for transformed vectors
+  const isDraggable = !isTransformed;
   
   // Improved drag functionality with better sensitivity and camera-based movement
   const dragBind = useDrag(
@@ -215,10 +214,6 @@ const Vector = ({ vector }: VectorProps) => {
           console.log("Vector clicked:", vector.id);
         }}
         onPointerDown={(e: any) => {
-          // Only perform these actions if vector is draggable
-          // (not a transformed vector or axis vector)
-          if (!isDraggable) return;
-          
           // Set a DOM attribute that our Controls can detect
           const canvas = document.querySelector('canvas');
           if (canvas) {
@@ -239,8 +234,7 @@ const Vector = ({ vector }: VectorProps) => {
           
           // Prevent orbit controls from taking over
           e.stopPropagation();
-          
-          // Note: We removed e.preventDefault() since it's not available in some events
+          e.preventDefault();
         }}
         onPointerEnter={() => isDraggable && setHovered(true)}
         onPointerLeave={() => setHovered(false)}
