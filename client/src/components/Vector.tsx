@@ -2,10 +2,8 @@ import React, { useMemo, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Vector as VectorType } from "../lib/stores/useVectorStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
-import { useDrag } from "@use-gesture/react";
-import { useThree, useFrame } from "@react-three/fiber";
+import { useThree, useFrame, ThreeEvent } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
-import { vectorDistance } from "../lib/math";
 
 interface VectorProps {
   vector: VectorType;
@@ -13,7 +11,7 @@ interface VectorProps {
 
 const Vector = ({ vector }: VectorProps) => {
   const { updateVector } = useVectorStore();
-  const { camera, raycaster, gl, mouse } = useThree();
+  const { camera, mouse } = useThree();
   
   const components = vector.components;
   const isTransformed = vector.isTransformed;
@@ -71,43 +69,40 @@ const Vector = ({ vector }: VectorProps) => {
   
   // Use a direct frameloop to handle dragging
   useFrame(() => {
-    if (isDragging && isDraggable) {
+    if (isDragging && isDraggable && dragStart) {
       // Get current viewport mouse position
       const vpMouse = new THREE.Vector2(mouse.x, mouse.y);
       
-      if (dragStart && originalComponents.length > 0) {
-        const sensitivity = 0.1;
+      if (originalComponents.length > 0) {
+        // Calculate delta from drag start
+        const sensitivity = 0.3; // Increased for more responsive movement
         const deltaX = (vpMouse.x - dragStart.x) * sensitivity;
         const deltaY = (vpMouse.y - dragStart.y) * sensitivity;
-        
-        // Create a plane to project mouse movement onto
-        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion));
-        const raycaster = new THREE.Raycaster();
         
         // Get camera right and up vectors for screen-space movement
         const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
         const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
         
-        // Scale based on distance
-        const distanceScale = camera.position.length() * 0.1;
+        // Distance factor for scaling movement
+        const distanceFactor = Math.max(1, camera.position.length() * 0.1);
         
         let newComponents;
         if (components.length === 2) {
-          // 2D vectors - simpler to update
+          // 2D vectors move in screen space
           newComponents = [
-            originalComponents[0] + deltaX * distanceScale,
-            originalComponents[1] - deltaY * distanceScale // Flip Y axis
+            originalComponents[0] + deltaX * distanceFactor,
+            originalComponents[1] - deltaY * distanceFactor // Flip Y axis for intuitive movement
           ];
         } else {
-          // 3D vectors - apply movement based on camera view
+          // 3D vectors - movement in camera-aligned plane
           newComponents = [
-            originalComponents[0] + deltaX * cameraRight.x * distanceScale - deltaY * cameraUp.x * distanceScale,
-            originalComponents[1] + deltaX * cameraRight.y * distanceScale - deltaY * cameraUp.y * distanceScale,
-            originalComponents[2] + deltaX * cameraRight.z * distanceScale - deltaY * cameraUp.z * distanceScale,
+            originalComponents[0] + (deltaX * cameraRight.x - deltaY * cameraUp.x) * distanceFactor,
+            originalComponents[1] + (deltaX * cameraRight.y - deltaY * cameraUp.y) * distanceFactor,
+            originalComponents[2] + (deltaX * cameraRight.z - deltaY * cameraUp.z) * distanceFactor,
           ];
         }
         
-        // Apply limits (max 20 units length, min 0.1 units length)
+        // Ensure vectors aren't too large or too small
         const length = Math.sqrt(newComponents.reduce((sum, val) => sum + val * val, 0));
         if (length > 20) {
           const scale = 20 / length;
@@ -117,7 +112,7 @@ const Vector = ({ vector }: VectorProps) => {
           newComponents = newComponents.map(c => c * scale);
         }
         
-        // Round values for better display
+        // Round to 2 decimal places for cleaner display
         newComponents = newComponents.map(val => Math.round(val * 100) / 100);
         
         // Update vector in store
@@ -126,9 +121,13 @@ const Vector = ({ vector }: VectorProps) => {
     }
   });
   
-  // Define event functions
-  const handlePointerDown = (e: any) => {
+  // Event handler for starting drag
+  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) return;
+    
+    // Prevent orbit controls from taking over
+    e.stopPropagation();
+    // Note: ThreeEvent doesn't have preventDefault directly
     
     // Set a DOM attribute that our Controls can detect
     const canvas = document.querySelector('canvas');
@@ -156,12 +155,6 @@ const Vector = ({ vector }: VectorProps) => {
       // Remove when interaction ends
       window.addEventListener('mouseup', clearAttribute);
       window.addEventListener('mouseleave', clearAttribute);
-    }
-    
-    // Prevent orbit controls from taking over
-    e.stopPropagation();
-    if (typeof e.preventDefault === 'function') {
-      e.preventDefault();
     }
   };
   
@@ -205,6 +198,7 @@ const Vector = ({ vector }: VectorProps) => {
       
       {/* Arrow head at the end point - draggable */}
       <group
+        ref={groupRef}
         position={end}
         rotation={arrowDirection.x || arrowDirection.z ? 
           new THREE.Euler().setFromQuaternion(
@@ -219,7 +213,7 @@ const Vector = ({ vector }: VectorProps) => {
         <mesh 
           ref={arrowHeadRef}
           userData={{ vectorElement: true }}
-          onClick={(e: any) => {
+          onClick={(e: ThreeEvent<MouseEvent>) => {
             e.stopPropagation();
             console.log("Vector clicked:", vector.id);
           }}
