@@ -123,26 +123,39 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   setTransformedVectors: (originalVectors, transformedVectors) => {
     set((state) => {
-      // Keep only non-transformed vectors
-      const originalState = state.vectors.filter(v => !v.isTransformed);
-      
-      // Sync visibility between original and transformed vectors
-      const syncedTransformed = transformedVectors.map(transformed => {
-        // Find the corresponding original vector
-        const original = originalState.find(v => v.id === transformed.originalId);
+      try {
+        // First, filter out any existing transformed vectors
+        const nonTransformedVectors = state.vectors.filter(v => !v.isTransformed);
         
-        // If found, ensure transformed vector has same visibility as original
-        if (original) {
-          return { ...transformed, visible: original.visible };
-        }
+        // For each transformed vector, find its original and match visibility
+        const syncedTransformedVectors = transformedVectors.map(transformed => {
+          // Default visibility to true if original can't be found
+          let visibility = true;
+          
+          // Find original by originalId and match visibility
+          if (transformed.originalId) {
+            const original = nonTransformedVectors.find(v => v.id === transformed.originalId);
+            if (original) {
+              visibility = original.visible;
+            }
+          }
+          
+          // Return transformed vector with matched visibility
+          return {
+            ...transformed,
+            visible: visibility
+          };
+        });
         
-        return transformed;
-      });
-      
-      // Return updated state
-      return {
-        vectors: [...originalState, ...syncedTransformed]
-      };
+        // Return updated state with all vectors
+        return {
+          vectors: [...nonTransformedVectors, ...syncedTransformedVectors]
+        };
+      } catch (error) {
+        console.error("Error in setTransformedVectors:", error);
+        // Return unchanged state on error
+        return state;
+      }
     });
   },
   

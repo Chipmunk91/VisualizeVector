@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef, useState } from "react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Vector as VectorType } from "../lib/stores/useVectorStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
@@ -13,13 +13,13 @@ interface VectorProps {
 
 const Vector = ({ vector }: VectorProps) => {
   const { updateVector } = useVectorStore();
-  const { camera, raycaster, size } = useThree();
+  const { camera } = useThree();
   const components = vector.components;
   const isTransformed = vector.isTransformed;
   const arrowHeadRef = useRef<THREE.Mesh>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Debug logging
+  // Debug logging (limited to reduce spam)
   useEffect(() => {
     console.log("Rendering Vector component:", vector);
   }, [vector]);
@@ -36,7 +36,7 @@ const Vector = ({ vector }: VectorProps) => {
     }
   }, [components]);
 
-  // Calculate midpoint for label placement
+  // Calculate midpoint for arrow placement
   const midPoint = useMemo(() => {
     return new THREE.Vector3(
       start.x + (end.x - start.x) * 0.5,
@@ -76,9 +76,8 @@ const Vector = ({ vector }: VectorProps) => {
       
       if (active) {
         // Calculate a movement scale based on camera distance from the origin
-        // This helps make the drag movement more natural
         const cameraDistance = camera.position.length();
-        const movementScale = cameraDistance / 15; // Adjust this divisor to tune sensitivity
+        const movementScale = cameraDistance / 15; // Adjust sensitivity
         
         // Calculate new vector components with scaled mouse movement
         let newComponents;
@@ -192,64 +191,24 @@ const Vector = ({ vector }: VectorProps) => {
         />
       </mesh>
       
-      {/* Vector name label - with distance threshold to avoid showing label for nearly identical vectors */}
+      {/* Simple vector label - avoiding advanced logic that might cause issues */}
       {vector.visible && (
-        <VectorLabel 
-          vector={vector}
+        <Text
           position={[end.x, end.y + 0.5, end.z]}
-          camera={camera}
-          opacity={opacity}
-        />
+          fontSize={0.4}
+          color={vector.color}
+          anchorX="center"
+          anchorY="bottom"
+          fillOpacity={opacity}
+          outlineWidth={0.04}
+          outlineColor="#000000"
+          outlineOpacity={opacity * 0.5}
+          quaternion={camera.quaternion}
+        >
+          {vector.label}
+        </Text>
       )}
-      
-      {/* Debug info in useEffect */}
     </group>
-  );
-};
-
-// Create a separate component for vector labels to prevent rendering issues
-interface VectorLabelProps {
-  vector: VectorType;
-  position: [number, number, number];
-  camera: THREE.Camera;
-  opacity: number;
-}
-
-const VectorLabel = ({ vector, position, camera, opacity }: VectorLabelProps) => {
-  const { vectors } = useVectorStore();
-  
-  // For transformed vectors, check if they're significantly different from original
-  if (vector.isTransformed && vector.originalId) {
-    const originalVector = vectors.find(v => v.id === vector.originalId);
-    
-    if (originalVector) {
-      // Calculate distance between original and transformed vectors
-      const distance = vectorDistance(originalVector.components, vector.components);
-      
-      // If vectors are very close (almost identical), don't show the transformed label
-      const DISTANCE_THRESHOLD = 0.1;
-      if (distance !== null && distance < DISTANCE_THRESHOLD) {
-        return null;
-      }
-    }
-  }
-  
-  // Render the label for original vectors or significantly transformed ones
-  return (
-    <Text
-      position={position}
-      fontSize={0.4}
-      color={vector.color}
-      anchorX="center"
-      anchorY="bottom"
-      fillOpacity={opacity}
-      outlineWidth={0.04}
-      outlineColor="#000000"
-      outlineOpacity={opacity * 0.5}
-      quaternion={camera.quaternion}
-    >
-      {vector.label}
-    </Text>
   );
 };
 
