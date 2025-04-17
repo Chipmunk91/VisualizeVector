@@ -92,3 +92,22 @@ export function crossProduct(v1: number[], v2: number[]): number[] | null {
     v1[0] * v2[1] - v1[1] * v2[0]
   ];
 }
+
+/**
+ * Calculate the Euclidean distance between two vectors
+ * @param v1 First vector components
+ * @param v2 Second vector components
+ * @returns The distance between vectors or null if dimensions don't match
+ */
+export function vectorDistance(v1: number[], v2: number[]): number | null {
+  if (v1.length !== v2.length) {
+    return null;
+  }
+  
+  let sumSquared = 0;
+  for (let i = 0; i < v1.length; i++) {
+    sumSquared += Math.pow(v1[i] - v2[i], 2);
+  }
+  
+  return Math.sqrt(sumSquared);
+}

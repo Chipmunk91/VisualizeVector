@@ -5,6 +5,7 @@ import { useVectorStore } from "../lib/stores/useVectorStore";
 import { useDrag } from "@use-gesture/react";
 import { useThree } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
+import { vectorDistance } from "../lib/math";
 
 interface VectorProps {
   vector: VectorType;
@@ -191,27 +192,64 @@ const Vector = ({ vector }: VectorProps) => {
         />
       </mesh>
       
-      {/* Vector name label */}
+      {/* Vector name label - with distance threshold to avoid showing label for nearly identical vectors */}
       {vector.visible && (
-        <Text
+        <VectorLabel 
+          vector={vector}
           position={[end.x, end.y + 0.5, end.z]}
-          fontSize={0.4}
-          color={vector.color}
-          anchorX="center"
-          anchorY="bottom"
-          fillOpacity={opacity}
-          outlineWidth={0.04}
-          outlineColor="#000000"
-          outlineOpacity={opacity * 0.5}
-          // Always face the camera
-          quaternion={camera.quaternion}
-        >
-          {vector.label}
-        </Text>
+          camera={camera}
+          opacity={opacity}
+        />
       )}
       
       {/* Debug info in useEffect */}
     </group>
+  );
+};
+
+// Create a separate component for vector labels to prevent rendering issues
+interface VectorLabelProps {
+  vector: VectorType;
+  position: [number, number, number];
+  camera: THREE.Camera;
+  opacity: number;
+}
+
+const VectorLabel = ({ vector, position, camera, opacity }: VectorLabelProps) => {
+  const { vectors } = useVectorStore();
+  
+  // For transformed vectors, check if they're significantly different from original
+  if (vector.isTransformed && vector.originalId) {
+    const originalVector = vectors.find(v => v.id === vector.originalId);
+    
+    if (originalVector) {
+      // Calculate distance between original and transformed vectors
+      const distance = vectorDistance(originalVector.components, vector.components);
+      
+      // If vectors are very close (almost identical), don't show the transformed label
+      const DISTANCE_THRESHOLD = 0.1;
+      if (distance !== null && distance < DISTANCE_THRESHOLD) {
+        return null;
+      }
+    }
+  }
+  
+  // Render the label for original vectors or significantly transformed ones
+  return (
+    <Text
+      position={position}
+      fontSize={0.4}
+      color={vector.color}
+      anchorX="center"
+      anchorY="bottom"
+      fillOpacity={opacity}
+      outlineWidth={0.04}
+      outlineColor="#000000"
+      outlineOpacity={opacity * 0.5}
+      quaternion={camera.quaternion}
+    >
+      {vector.label}
+    </Text>
   );
 };
 

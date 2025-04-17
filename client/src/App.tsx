@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useCallback, useRef, useLayoutEffect } from "react";
+import React, { useState, Suspense, useCallback, useRef, useLayoutEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import "@fontsource/inter";
 import Controls from "./components/Controls";
@@ -18,66 +18,52 @@ function App() {
   const { matrix, showTransformed } = useMatrixStore();
   const { vectors, setTransformedVectors, clearTransformedVectors } = useVectorStore();
 
-  // Using refs to prevent causing infinite update loops
-  const matrixRef = useRef(matrix);
-  const vectorsRef = useRef(vectors);
-  const showTransformedRef = useRef(showTransformed);
+  // Use a simpler approach by creating stable hash values for comparison
+  const nonTransformedVectorsHash = useMemo(() => {
+    const originalVectors = vectors.filter(v => !v.isTransformed);
+    return JSON.stringify(originalVectors.map(v => ({
+      id: v.id,
+      components: v.components,
+      visible: v.visible
+    })));
+  }, [vectors]);
   
-  // Update refs when props change
+  const matrixHash = useMemo(() => JSON.stringify(matrix), [matrix]);
+  
+  // Process matrix transformations in one effect that depends on the derived hashes
   useLayoutEffect(() => {
-    matrixRef.current = matrix;
-    vectorsRef.current = vectors;
-    showTransformedRef.current = showTransformed;
-  }, [matrix, vectors, showTransformed]);
-  
-  // Memoized calculation function
-  const calculateTransformations = useCallback(() => {
-    // Get refs safely to avoid closures with stale values
-    const currentMatrix = matrixRef.current;
-    const currentVectors = vectorsRef.current;
-    const shouldShowTransformed = showTransformedRef.current;
-    
-    if (!shouldShowTransformed) {
+    // Skip if transformations are disabled
+    if (!showTransformed) {
       clearTransformedVectors();
       return;
     }
-
-    const originalVectors = currentVectors.filter(v => !v.isTransformed);
+    
+    // Get only original vectors
+    const originalVectors = vectors.filter(v => !v.isTransformed);
     if (originalVectors.length === 0) {
       return;
     }
-    
+
+    // Calculate transformed vectors
     try {
-      const transformed = originalVectors
-        .map(vector => applyMatrixTransformation(currentMatrix, vector))
-        .filter((v): v is NonNullable<typeof v> => v !== null);
-        
-      if (transformed.length > 0) {
-        setTransformedVectors([], transformed);
+      // Calculate transformations
+      const transformedVectors = [];
+      
+      for (const vector of originalVectors) {
+        const transformed = applyMatrixTransformation(matrix, vector);
+        if (transformed) {
+          transformedVectors.push(transformed);
+        }
+      }
+      
+      // Only update if we have transformations to add
+      if (transformedVectors.length > 0) {
+        setTransformedVectors([], transformedVectors);
       }
     } catch (error) {
-      console.error("Error calculating transformations:", error);
+      console.error("Error applying matrix transformations:", error);
     }
-  }, [clearTransformedVectors, setTransformedVectors]);
-  
-  // Run the calculation only when the show/hide toggle changes
-  useLayoutEffect(() => {
-    calculateTransformations();
-  }, [showTransformed, calculateTransformations]);
-  
-  // Also run calculation when matrix changes
-  useLayoutEffect(() => {
-    if (showTransformed) {
-      calculateTransformations();
-    }
-  }, [matrix, calculateTransformations, showTransformed]);
-  
-  // Run calculation when vectors change (add/remove/update)
-  useLayoutEffect(() => {
-    if (showTransformed) {
-      calculateTransformations();
-    }
-  }, [vectors, calculateTransformations, showTransformed]);
+  }, [showTransformed, nonTransformedVectorsHash, matrixHash, clearTransformedVectors, setTransformedVectors, vectors, matrix]);
 
   return (
     <div className="flex h-screen w-screen bg-background text-foreground">
