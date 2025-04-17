@@ -1,5 +1,5 @@
 import { useThree } from "@react-three/fiber";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useVectorStore, Vector as VectorType } from "../lib/stores/useVectorStore";
 import Grid from "./Grid";
 import Axis from "./Axis";
@@ -44,41 +44,18 @@ const VectorScene = () => {
     setAllVectors([...defaultVectors, ...vectors]);
   }, [vectors]);
   
-  // Adjust camera to show all vectors
+  // Camera setup - ONLY runs once when the component mounts
+  const cameraInitialized = useRef(false);
+  
   useEffect(() => {
-    if (vectors.length === 0) {
-      // Reset to default view if no vectors
-      camera.position.set(5, 5, 5);
+    // Only set initial camera position on first render
+    if (!cameraInitialized.current) {
+      console.log("Setting initial camera position in VectorScene");
+      camera.position.set(8, 8, 8);
       camera.lookAt(0, 0, 0);
-      return;
+      cameraInitialized.current = true;
     }
-    
-    // Only recalculate camera position for significant changes
-    // Find the furthest vector to ensure all are visible
-    let maxDistance = 0;
-    
-    vectors.forEach(vector => {
-      if (!vector.visible) return;
-      
-      const distance = Math.sqrt(
-        vector.components.reduce((sum, component) => sum + component * component, 0)
-      );
-      
-      maxDistance = Math.max(maxDistance, distance);
-    });
-    
-    // Ensure camera is far enough to show all vectors
-    // with a minimum distance and some extra space
-    const minDistance = 5;
-    const padding = 2;
-    const optimalDistance = Math.max(minDistance, maxDistance + padding);
-    
-    // Maintain camera angle but adjust distance
-    const direction = camera.position.clone().normalize();
-    camera.position.copy(direction.multiplyScalar(optimalDistance));
-    camera.lookAt(0, 0, 0);
-    
-  }, [vectors, camera]);
+  }, []);
   
   return (
     <>

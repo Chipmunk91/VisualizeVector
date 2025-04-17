@@ -60,71 +60,87 @@ const Vector = ({ vector }: VectorProps) => {
   
   // Implement drag functionality
   const dragBind = useDrag(
-    ({ active, movement: [x, y], initial, event }) => {
-      if (!isDraggable) return;
+    ({ active, xy: [x, y], initial: [x0, y0], event, memo = camera.position.clone() }) => {
+      if (!isDraggable) return memo;
       
       if (event) event.stopPropagation();
       setIsDragging(active);
       
       if (active && arrowHeadRef.current) {
-        // Create a plane perpendicular to the camera
-        const plane = new THREE.Plane(
-          new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion),
-          0
-        );
+        // Create a working plane based on camera position and origin
+        const origin = new THREE.Vector3(0, 0, 0);
+        const cameraDirection = new THREE.Vector3().subVectors(origin, camera.position).normalize();
+        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(cameraDirection, origin);
         
-        // Create raycaster from initial mouse position
+        // Create raycasters for initial and current mouse positions
         const initialMouse = new THREE.Vector2(
-          (initial[0] / size.width) * 2 - 1,
-          -(initial[1] / size.height) * 2 + 1
+          (x0 / size.width) * 2 - 1,
+          -(y0 / size.height) * 2 + 1
         );
-        raycaster.setFromCamera(initialMouse, camera);
+        const currentMouse = new THREE.Vector2(
+          (x / size.width) * 2 - 1,
+          -(y / size.height) * 2 + 1
+        );
         
-        // Find intersection with the plane
+        // Get initial intersection
+        raycaster.setFromCamera(initialMouse, camera);
         const initialIntersection = new THREE.Vector3();
         raycaster.ray.intersectPlane(plane, initialIntersection);
         
-        // Get current mouse position
-        const currentMouse = new THREE.Vector2(
-          ((initial[0] + x) / size.width) * 2 - 1,
-          -((initial[1] + y) / size.height) * 2 + 1
-        );
+        // Get current intersection
         raycaster.setFromCamera(currentMouse, camera);
-        
-        // Find current intersection
         const currentIntersection = new THREE.Vector3();
         raycaster.ray.intersectPlane(plane, currentIntersection);
         
-        // Calculate movement vector
-        const movement = new THREE.Vector3().subVectors(
-          currentIntersection,
-          initialIntersection
-        );
-        
-        // Calculate new vector components
-        let newComponents;
-        if (components.length === 2) {
-          newComponents = [
-            components[0] + movement.x,
-            components[1] + movement.y
-          ];
-        } else {
-          newComponents = [
-            components[0] + movement.x,
-            components[1] + movement.y,
-            components[2] + movement.z
-          ];
+        if (initialIntersection && currentIntersection) {
+          // Calculate offset in world coordinates
+          const worldMovement = new THREE.Vector3().subVectors(
+            currentIntersection,
+            initialIntersection
+          );
+          
+          // Apply movement with proper scaling for intuitive control
+          let newComponents;
+          if (components.length === 2) {
+            newComponents = [
+              components[0] + worldMovement.x,
+              components[1] + worldMovement.y
+            ];
+          } else {
+            newComponents = [
+              components[0] + worldMovement.x,
+              components[1] + worldMovement.y,
+              components[2] + worldMovement.z
+            ];
+          }
+          
+          // Update vector in store
+          updateVector(vector.id, newComponents);
         }
-        
-        // Update vector in store
-        updateVector(vector.id, newComponents);
       }
+      
+      return memo;
     },
     { 
       // Only allow dragging if not a transformed vector
       enabled: isDraggable
     }
   );
+  
+  // Use internal state for managing cursor
+  const [hovered, setHovered] = useState(false);
+  
+  // Update cursor style
+  useEffect(() => {
+    if (isDraggable) {
+      document.body.style.cursor = hovered ? 'move' : 'auto';
+    }
+    
+    // Cleanup
+    return () => {
+      document.body.style.cursor = 'auto';
+    };
+  }, [hovered, isDraggable]);
   
   return (
     <group>
@@ -161,11 +177,13 @@ const Vector = ({ vector }: VectorProps) => {
             )
           ) 
           : new THREE.Euler(0, 0, 0)}
-        {...dragBind()}
-        onClick={(e) => {
+        {...dragBind() as any}
+        onClick={(e: any) => {
           e.stopPropagation();
           console.log("Vector clicked:", vector.id);
         }}
+        onPointerEnter={() => isDraggable && setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
       >
         <coneGeometry args={[0.15, 0.4, 16]} />
         <meshStandardMaterial 
