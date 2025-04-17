@@ -60,14 +60,14 @@ const Vector = ({ vector }: VectorProps) => {
   // Prevent dragging for transformed vectors
   const isDraggable = !isTransformed;
   
-  // Ultra-simplified drag functionality that's reliable but less intuitive
+  // Improved drag functionality with better sensitivity and camera-based movement
   const dragBind = useDrag(
     ({ active, movement: [mx, my], event, memo = { 
       startComponents: [...components]
     }}) => {
       if (!isDraggable) return memo;
       
-      // Block event propagation
+      // Block event propagation to prevent camera movement
       if (event) {
         event.stopPropagation();
         event.preventDefault();
@@ -76,39 +76,69 @@ const Vector = ({ vector }: VectorProps) => {
       setIsDragging(active);
       
       if (active) {
-        // Use very simple movement approach - X movement changes X, Y movement changes Y
-        // This isn't perspective correct but it's very reliable
+        // Get camera direction vectors
+        const cameraRight = new THREE.Vector3(1, 0, 0);
+        const cameraUp = new THREE.Vector3(0, 1, 0);
         
-        const sensitivity = 0.05; // Higher value = more movement
+        // Apply camera rotation to get correct drag directions relative to view
+        cameraRight.applyQuaternion(camera.quaternion);
+        cameraUp.applyQuaternion(camera.quaternion);
         
-        // Calculate new positions with simple scaling
+        // Cross product to get the forward direction
+        const cameraForward = new THREE.Vector3();
+        cameraForward.crossVectors(cameraRight, cameraUp);
+        
+        // Project movement onto camera vectors
+        const sensitivity = 0.08; // Increased for better response
+        
+        // Calculate movements along camera-aligned axes
+        let movementX = mx * sensitivity;
+        let movementY = my * sensitivity;
+        
+        // Calculate new positions with camera-relative movement
         let newComponents;
         
         if (components.length === 2) {
-          // 2D vectors: X and Y
+          // 2D vectors: X and Y plane only
           newComponents = [
-            memo.startComponents[0] + mx * sensitivity,
-            memo.startComponents[1] - my * sensitivity // Flip Y for natural feel
+            memo.startComponents[0] + movementX,
+            memo.startComponents[1] - movementY // Flip Y for natural feel
           ];
         } else {
-          // For 3D vectors, we'll change different axes based on a simple heuristic
+          // For 3D vectors, use camera direction to determine movement axes
+          // Get the dominant camera axis to adjust dragging behavior
+          const camX = Math.abs(camera.position.x);
+          const camY = Math.abs(camera.position.y);
+          const camZ = Math.abs(camera.position.z);
           
-          // If camera is more looking from above (Y-dominant view), change X and Z
-          // This is an extreme simplification but provides consistent behavior
-          if (Math.abs(camera.position.y) > Math.max(Math.abs(camera.position.x), Math.abs(camera.position.z))) {
-            // Looking from above: mouse X → vector X, mouse Y → vector Z
+          // Default is horizontal plane movement (X-Z)
+          if (camY > Math.max(camX, camZ) * 0.7) {
+            // Camera is more above, drag in X-Z plane
             newComponents = [
-              memo.startComponents[0] + mx * sensitivity,
-              memo.startComponents[1], // Y unchanged
-              memo.startComponents[2] - my * sensitivity
+              memo.startComponents[0] + movementX * cameraRight.x + movementY * cameraForward.x,
+              memo.startComponents[1], // Y unchanged when viewed from above
+              memo.startComponents[2] + movementX * cameraRight.z + movementY * cameraForward.z
+            ];
+          } else if (camZ > Math.max(camX, camY) * 0.7) {
+            // Camera is more from front/back, drag in X-Y plane
+            newComponents = [
+              memo.startComponents[0] + movementX * cameraRight.x - movementY * cameraUp.x,
+              memo.startComponents[1] + movementX * cameraRight.y - movementY * cameraUp.y,
+              memo.startComponents[2] // Z unchanged when viewed from front/back
+            ];
+          } else if (camX > Math.max(camY, camZ) * 0.7) {
+            // Camera is more from side, drag in Y-Z plane
+            newComponents = [
+              memo.startComponents[0], // X unchanged when viewed from side
+              memo.startComponents[1] - movementY * cameraUp.y + movementX * cameraForward.y,
+              memo.startComponents[2] - movementY * cameraUp.z + movementX * cameraForward.z
             ];
           } else {
-            // Looking from side: mouse X → X or Z (depending on camera), mouse Y → Y
-            // Simplify to just basic X-Y when viewed from sides
+            // Mixed view, use all axes with less movement on farther axis
             newComponents = [
-              memo.startComponents[0] + mx * sensitivity,
-              memo.startComponents[1] - my * sensitivity,
-              memo.startComponents[2]
+              memo.startComponents[0] + movementX * cameraRight.x - movementY * cameraUp.x,
+              memo.startComponents[1] + movementX * cameraRight.y - movementY * cameraUp.y,
+              memo.startComponents[2] + movementX * cameraRight.z - movementY * cameraUp.z
             ];
           }
         }
@@ -187,14 +217,24 @@ const Vector = ({ vector }: VectorProps) => {
           // Set a DOM attribute that our Controls can detect
           const canvas = document.querySelector('canvas');
           if (canvas) {
+            // Flag for dragging a vector to disable camera controls
             canvas.setAttribute('data-vector-element', 'true');
-            // Remove it after the interaction is complete
-            setTimeout(() => {
+            
+            // Set global event listeners to ensure removal of attribute
+            const clearAttribute = () => {
               canvas.removeAttribute('data-vector-element');
-            }, 100);
+              window.removeEventListener('mouseup', clearAttribute);
+              window.removeEventListener('mouseleave', clearAttribute);
+            };
+            
+            // Remove when interaction ends
+            window.addEventListener('mouseup', clearAttribute);
+            window.addEventListener('mouseleave', clearAttribute);
           }
+          
           // Prevent orbit controls from taking over
           e.stopPropagation();
+          e.preventDefault();
         }}
         onPointerEnter={() => isDraggable && setHovered(true)}
         onPointerLeave={() => setHovered(false)}

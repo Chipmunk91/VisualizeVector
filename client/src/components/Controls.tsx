@@ -33,7 +33,7 @@ const Controls = () => {
         if (controlsRef.current) {
           controlsRef.current.enabled = true;
         }
-      }, 100);
+      }, 250); // Increased timeout to ensure dragging finishes before controls re-enable
     };
     
     // Use mousedown/mouseup for more reliable detection than pointerevents
