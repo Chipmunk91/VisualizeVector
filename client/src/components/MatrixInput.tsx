@@ -3,6 +3,7 @@ import { useVectorStore } from "../lib/stores/useVectorStore";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import MatrixAnalysis from "./MatrixAnalysis";
 
 // Extremely simplified component - no side effects
 const MatrixInput = () => {
@@ -120,16 +121,7 @@ const MatrixInput = () => {
             ))}
           </div>
           
-          <div className="p-3 bg-muted rounded-md text-sm">
-            <p className="mb-2"><strong>How to use:</strong></p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Set the matrix dimension based on your vectors</li>
-              <li>For 2D vectors, use 2×2 matrix</li>
-              <li>For 3D vectors, use 3×3 matrix</li>
-              <li>Mixed dimensions (2×3, 3×2) are for transformations between spaces</li>
-              <li>Enable "Show Transformed Vectors" to see the result</li>
-            </ul>
-          </div>
+          <MatrixAnalysis />
         </CardContent>
       </Card>
     </div>

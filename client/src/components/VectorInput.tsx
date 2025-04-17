@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Trash, Eye, EyeOff } from "lucide-react";
+import VectorAnalysis from "./VectorAnalysis";
 
 // Simple implementation to avoid re-render issues
 const VectorInput = () => {
