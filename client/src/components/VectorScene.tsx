@@ -4,6 +4,7 @@ import { useVectorStore, Vector as VectorType } from "../lib/stores/useVectorSto
 import Grid from "./Grid";
 import Axis from "./Axis";
 import Vector from "./Vector";
+import { useMatrixStore } from "../lib/stores/useMatrixStore";
 
 // Default vectors that will always be shown for testing
 const defaultVectors: VectorType[] = [
@@ -35,14 +36,42 @@ const defaultVectors: VectorType[] = [
 
 const VectorScene = () => {
   const { vectors } = useVectorStore();
+  const { showTransformed } = useMatrixStore();
   const { camera } = useThree();
   const [allVectors, setAllVectors] = useState<VectorType[]>([...defaultVectors]);
   
-  // Combine user vectors with default vectors
+  // Default grid size
+  const defaultSize = 10;
+  
+  // Calculate the grid size based on vector coordinates
+  const [gridSize, setGridSize] = useState(defaultSize);
+  
+  // Combine user vectors with default vectors and calculate grid size
   useEffect(() => {
     console.log("Rendering VectorScene with vectors:", vectors);
-    setAllVectors([...defaultVectors, ...vectors]);
-  }, [vectors]);
+    const combinedVectors = [...defaultVectors, ...vectors];
+    setAllVectors(combinedVectors);
+    
+    // Determine if we need a larger grid size based on vector coordinates
+    let maxCoordinate = defaultSize;
+    
+    // Check all vectors including transformed ones
+    combinedVectors.forEach(vector => {
+      vector.components.forEach(component => {
+        const absComponent = Math.abs(component);
+        if (absComponent > maxCoordinate) {
+          // Round up to the nearest multiple of 10
+          maxCoordinate = Math.ceil(absComponent / 10) * 10;
+        }
+      });
+    });
+    
+    // Set the new grid size if it's changed
+    if (maxCoordinate !== gridSize) {
+      console.log("Setting new grid size:", maxCoordinate);
+      setGridSize(maxCoordinate);
+    }
+  }, [vectors, gridSize, showTransformed]);
   
   // Camera setup - ONLY runs once when the component mounts
   const cameraInitialized = useRef(false);
@@ -63,9 +92,9 @@ const VectorScene = () => {
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={0.8} />
       
-      {/* Coordinate system */}
-      <Grid size={10} divisions={10} />
-      <Axis />
+      {/* Coordinate system - adjust grid size dynamically but keep axis at 10 units */}
+      <Grid size={gridSize} divisions={gridSize} />
+      <Axis length={10} />
       
       {/* Debug sphere at origin */}
       <mesh position={[0, 0, 0]}>

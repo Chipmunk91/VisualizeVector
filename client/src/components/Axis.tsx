@@ -3,9 +3,13 @@ import { Text } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 
 // Axis component with Text labels
-const Axis = () => {
-  // Define axis length
-  const axisLength = 10;
+interface AxisProps {
+  length?: number;
+}
+
+const Axis = ({ length = 10 }: AxisProps) => {
+  // Use the provided axis length or default to 10
+  const axisLength = length;
   
   // Get camera for billboard text
   const { camera } = useThree();
