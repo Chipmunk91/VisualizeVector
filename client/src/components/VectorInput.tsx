@@ -105,7 +105,7 @@ const VectorInput = () => {
                   <Label htmlFor="y-2d">Y</Label>
                   <Input 
                     id="y-2d" 
-                    type="number" 
+                    type="text" 
                     value={y}
                     onChange={(e) => {
                       // Handle leading zeros properly (keep for decimals like 0.5)
@@ -135,7 +135,7 @@ const VectorInput = () => {
                   <Label htmlFor="x-3d">X</Label>
                   <Input 
                     id="x-3d" 
-                    type="number" 
+                    type="text" 
                     value={x}
                     onChange={(e) => {
                       // Handle leading zeros properly (keep for decimals like 0.5)
@@ -162,7 +162,7 @@ const VectorInput = () => {
                   <Label htmlFor="y-3d">Y</Label>
                   <Input 
                     id="y-3d" 
-                    type="number" 
+                    type="text" 
                     value={y}
                     onChange={(e) => {
                       // Handle leading zeros properly (keep for decimals like 0.5)
@@ -189,7 +189,7 @@ const VectorInput = () => {
                   <Label htmlFor="z-3d">Z</Label>
                   <Input 
                     id="z-3d" 
-                    type="number" 
+                    type="text" 
                     value={z}
                     onChange={(e) => {
                       // Handle leading zeros properly (keep for decimals like 0.5)
