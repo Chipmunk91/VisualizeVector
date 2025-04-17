@@ -79,16 +79,9 @@ const MatrixInput = () => {
                   // First transpose the matrix
                   transposeMatrix();
                   
-                  // Force recalculating transformed vectors instead of clearing
-                  // This will take advantage of our new compatibility logic
-                  const showTransformed = useMatrixStore.getState().showTransformed;
-                  if (showTransformed) {
-                    // Toggle off and back on to force recalculation
-                    useMatrixStore.setState({ showTransformed: false });
-                    setTimeout(() => {
-                      useMatrixStore.setState({ showTransformed: true });
-                    }, 10);
-                  }
+                  // Clear transformed vectors because dimensions have changed
+                  // This maintains correct mathematical behavior
+                  clearTransformedVectors();
                 }}
                 className="w-full"
               >

@@ -23,23 +23,10 @@ export function applyMatrixTransformation(
   const [mRows, mCols] = matrix.dimension.split('x').map(Number);
   const vDim = vector.components.length;
   
-  // Check compatibility: matrix columns must match vector dimension
+  // Strict mathematical compatibility check: matrix columns must match vector dimension
+  // For matrix-vector multiplication: (m×n) * (n×1) = (m×1)
   if (mCols !== vDim) {
-    // For 2D vectors in 3D space, pad with a zero if the matrix is 3x2
-    if (vDim === 2 && mCols === 3) {
-      // Clone vector and add a zero as z-coordinate
-      const paddedVector = { ...vector, components: [...vector.components, 0] };
-      return applyMatrixTransformation(matrix, paddedVector);
-    }
-    
-    // For 3D vectors with 2x3 matrices, we can still multiply if we drop the z-coordinate
-    if (vDim === 3 && mCols === 2) {
-      // Clone vector but only use x and y coordinates
-      const reducedVector = { ...vector, components: vector.components.slice(0, 2) };
-      return applyMatrixTransformation(matrix, reducedVector);
-    }
-    
-    // Otherwise, dimensions are incompatible
+    // Don't log a warning - this is expected in the UI when dimensions don't match
     return null;
   }
   
