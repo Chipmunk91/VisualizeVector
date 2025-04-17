@@ -66,7 +66,21 @@ const Vector = ({ vector }: VectorProps) => {
     }}) => {
       if (!isDraggable) return memo;
       
-      if (event) event.stopPropagation();
+      // Always stop propagation to prevent orbit controls from activating
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      
+      // When drag starts/ends, emit custom events to disable/enable orbit controls
+      if (active && !isDragging) {
+        // Starting a drag
+        document.dispatchEvent(new Event('vectorDragStart'));
+      } else if (!active && isDragging) {
+        // Ending a drag
+        document.dispatchEvent(new Event('vectorDragEnd'));
+      }
+      
       setIsDragging(active);
       
       if (active && arrowHeadRef.current) {
@@ -141,10 +155,10 @@ const Vector = ({ vector }: VectorProps) => {
   // Use internal state for managing cursor
   const [hovered, setHovered] = useState(false);
   
-  // Update cursor style
+  // Update cursor style to pointer (hand) when hovering over draggable vector tips
   useEffect(() => {
     if (isDraggable) {
-      document.body.style.cursor = hovered ? 'move' : 'auto';
+      document.body.style.cursor = hovered ? 'pointer' : 'auto';
     }
     
     // Cleanup
@@ -192,6 +206,10 @@ const Vector = ({ vector }: VectorProps) => {
         onClick={(e: any) => {
           e.stopPropagation();
           console.log("Vector clicked:", vector.id);
+        }}
+        onPointerDown={(e: any) => {
+          // Prevent orbit controls from taking over
+          e.stopPropagation();
         }}
         onPointerEnter={() => isDraggable && setHovered(true)}
         onPointerLeave={() => setHovered(false)}

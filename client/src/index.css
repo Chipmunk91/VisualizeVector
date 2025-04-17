@@ -113,5 +113,5 @@ canvas {
 
 /* Custom cursor for draggable elements */
 .draggable {
-  cursor: move !important;
+  cursor: pointer !important;
 }
