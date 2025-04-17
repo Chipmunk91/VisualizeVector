@@ -72,7 +72,24 @@ const VectorInput = () => {
                     id="x-2d" 
                     type="number" 
                     value={x} 
-                    onChange={(e) => setX(e.target.value)} 
+                    onChange={(e) => {
+                      // Handle leading zeros properly (keep for decimals like 0.5)
+                      let value = e.target.value;
+                      if (value.match(/^0[0-9]/) && !value.includes('.')) {
+                        value = value.replace(/^0+/, '');
+                        // Update the input value directly
+                        e.target.value = value;
+                      }
+                      setX(value);
+                    }}
+                    onClick={(e) => {
+                      // Select all on click
+                      (e.target as HTMLInputElement).select();
+                    }}
+                    onDoubleClick={(e) => {
+                      // Also select on double click to be safe
+                      (e.target as HTMLInputElement).select();
+                    }}
                     step="any"
                   />
                 </div>
@@ -81,8 +98,25 @@ const VectorInput = () => {
                   <Input 
                     id="y-2d" 
                     type="number" 
-                    value={y} 
-                    onChange={(e) => setY(e.target.value)} 
+                    value={y}
+                    onChange={(e) => {
+                      // Handle leading zeros properly (keep for decimals like 0.5)
+                      let value = e.target.value;
+                      if (value.match(/^0[0-9]/) && !value.includes('.')) {
+                        value = value.replace(/^0+/, '');
+                        // Update the input value directly
+                        e.target.value = value;
+                      }
+                      setY(value);
+                    }}
+                    onClick={(e) => {
+                      // Select all on click
+                      (e.target as HTMLInputElement).select();
+                    }}
+                    onDoubleClick={(e) => {
+                      // Also select on double click to be safe
+                      (e.target as HTMLInputElement).select();
+                    }}
                     step="any"
                   />
                 </div>
@@ -94,8 +128,25 @@ const VectorInput = () => {
                   <Input 
                     id="x-3d" 
                     type="number" 
-                    value={x} 
-                    onChange={(e) => setX(e.target.value)} 
+                    value={x}
+                    onChange={(e) => {
+                      // Handle leading zeros properly (keep for decimals like 0.5)
+                      let value = e.target.value;
+                      if (value.match(/^0[0-9]/) && !value.includes('.')) {
+                        value = value.replace(/^0+/, '');
+                        // Update the input value directly
+                        e.target.value = value;
+                      }
+                      setX(value);
+                    }}
+                    onClick={(e) => {
+                      // Select all on click
+                      (e.target as HTMLInputElement).select();
+                    }}
+                    onDoubleClick={(e) => {
+                      // Also select on double click to be safe
+                      (e.target as HTMLInputElement).select();
+                    }}
                     step="any"
                   />
                 </div>
@@ -104,8 +155,25 @@ const VectorInput = () => {
                   <Input 
                     id="y-3d" 
                     type="number" 
-                    value={y} 
-                    onChange={(e) => setY(e.target.value)} 
+                    value={y}
+                    onChange={(e) => {
+                      // Handle leading zeros properly (keep for decimals like 0.5)
+                      let value = e.target.value;
+                      if (value.match(/^0[0-9]/) && !value.includes('.')) {
+                        value = value.replace(/^0+/, '');
+                        // Update the input value directly
+                        e.target.value = value;
+                      }
+                      setY(value);
+                    }}
+                    onClick={(e) => {
+                      // Select all on click
+                      (e.target as HTMLInputElement).select();
+                    }}
+                    onDoubleClick={(e) => {
+                      // Also select on double click to be safe
+                      (e.target as HTMLInputElement).select();
+                    }}
                     step="any"
                   />
                 </div>
@@ -114,8 +182,25 @@ const VectorInput = () => {
                   <Input 
                     id="z-3d" 
                     type="number" 
-                    value={z} 
-                    onChange={(e) => setZ(e.target.value)} 
+                    value={z}
+                    onChange={(e) => {
+                      // Handle leading zeros properly (keep for decimals like 0.5)
+                      let value = e.target.value;
+                      if (value.match(/^0[0-9]/) && !value.includes('.')) {
+                        value = value.replace(/^0+/, '');
+                        // Update the input value directly
+                        e.target.value = value;
+                      }
+                      setZ(value);
+                    }}
+                    onClick={(e) => {
+                      // Select all on click
+                      (e.target as HTMLInputElement).select();
+                    }}
+                    onDoubleClick={(e) => {
+                      // Also select on double click to be safe
+                      (e.target as HTMLInputElement).select();
+                    }}
                     step="any"
                   />
                 </div>
