@@ -31,14 +31,18 @@ export const useVectorStore = create<VectorStore>((set) => ({
       id,
       components,
       color: getRandomColor(),
-      label: `v${components.length === 2 ? components.length : components.length}`,
+      label: `v${components.length}`,
       visible: true,
       isTransformed: false,
     };
     
+    console.log("Adding new vector to store:", newVector);
+    
     set((state) => ({
       vectors: [...state.vectors, newVector]
     }));
+    
+    console.log("Vector added, store now has vectors:", useVectorStore.getState().vectors);
   },
   
   removeVector: (id) => {

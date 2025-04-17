@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { Vector as VectorType } from "../lib/stores/useVectorStore";
 import { Text } from "@react-three/drei";
@@ -10,6 +10,11 @@ interface VectorProps {
 const Vector = ({ vector }: VectorProps) => {
   const components = vector.components;
   const isTransformed = vector.isTransformed;
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("Rendering Vector component:", vector);
+  }, [vector]);
   
   // Origin is always (0,0,0)
   const start = new THREE.Vector3(0, 0, 0);
@@ -83,29 +88,17 @@ const Vector = ({ vector }: VectorProps) => {
         />
       </mesh>
       
-      {/* Vector label */}
-      <Text
-        position={midPoint}
-        fontSize={0.2}
-        color={vector.color}
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/inter.json"
-      >
-        {isTransformed ? `T(${vector.label})` : vector.label}
-      </Text>
+      {/* Vector label - simplified without text for now */}
+      <mesh position={midPoint}>
+        <sphereGeometry args={[0.05, 16, 16]} />
+        <meshStandardMaterial color={vector.color} />
+      </mesh>
       
-      {/* Component values at the end point */}
-      <Text
-        position={[end.x + 0.2, end.y + 0.2, end.z + 0.2]}
-        fontSize={0.15}
-        color={vector.color}
-        anchorX="left"
-        anchorY="top"
-        font="/fonts/inter.json"
-      >
-        {`(${components.join(', ')})`}
-      </Text>
+      {/* Arrow head (cone) at end point */}
+      <mesh position={end}>
+        <boxGeometry args={[0.1, 0.1, 0.1]} />
+        <meshStandardMaterial color={vector.color} />
+      </mesh>
     </group>
   );
 };

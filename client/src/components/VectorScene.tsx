@@ -9,6 +9,11 @@ const VectorScene = () => {
   const { vectors } = useVectorStore();
   const { camera } = useThree();
   
+  // Debug logging
+  useEffect(() => {
+    console.log("Rendering VectorScene with vectors:", vectors);
+  }, [vectors]);
+  
   // Adjust camera to show all vectors
   useEffect(() => {
     if (vectors.length === 0) {
