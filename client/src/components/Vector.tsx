@@ -4,6 +4,7 @@ import { Vector as VectorType } from "../lib/stores/useVectorStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
 import { useDrag } from "@use-gesture/react";
 import { useThree } from "@react-three/fiber";
+import { Text } from "@react-three/drei";
 
 interface VectorProps {
   vector: VectorType;
@@ -189,6 +190,25 @@ const Vector = ({ vector }: VectorProps) => {
           transparent={true}
         />
       </mesh>
+      
+      {/* Vector name label */}
+      {vector.visible && (
+        <Text
+          position={[end.x, end.y + 0.5, end.z]}
+          fontSize={0.4}
+          color={vector.color}
+          anchorX="center"
+          anchorY="bottom"
+          fillOpacity={opacity}
+          outlineWidth={0.04}
+          outlineColor="#000000"
+          outlineOpacity={opacity * 0.5}
+          // Always face the camera
+          quaternion={camera.quaternion}
+        >
+          {vector.label}
+        </Text>
+      )}
       
       {/* Debug info in useEffect */}
     </group>

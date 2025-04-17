@@ -24,14 +24,17 @@ function App() {
   
   // This effect applies the matrix transformations when needed
   useEffect(() => {
+    // Only extract original vectors for comparison and transformation
+    const originalVectors = vectors.filter(v => !v.isTransformed);
+    
     // Create string representations for comparison to prevent unnecessary updates
-    const vectorsString = JSON.stringify(vectors.map(v => !v.isTransformed ? v : null).filter(Boolean));
+    const vectorsString = JSON.stringify(originalVectors);
     const matrixString = JSON.stringify(matrix);
     
     // Only process if something changed or show/hide toggle changed
     if (
       showTransformed && 
-      vectors.length > 0 && 
+      originalVectors.length > 0 && 
       (vectorsString !== prevVectorsRef.current || 
        matrixString !== prevMatrixRef.current)
     ) {
@@ -39,26 +42,23 @@ function App() {
       prevVectorsRef.current = vectorsString;
       prevMatrixRef.current = matrixString;
       
-      // Filter only original vectors
-      const originalVectors = vectors.filter(v => !v.isTransformed);
+      console.log("Applying matrix transformations to vectors");
       
-      if (originalVectors.length > 0) {
-        console.log("Applying matrix transformations to vectors");
-        
-        // Apply transformations
-        const transformedVectors = [];
-        
-        for (const vector of originalVectors) {
-          const transformed = applyMatrixTransformation(matrix, vector);
-          if (transformed) {
-            transformedVectors.push(transformed);
-          }
+      // Apply transformations
+      const transformedVectors = [];
+      
+      for (const vector of originalVectors) {
+        const transformed = applyMatrixTransformation(matrix, vector);
+        if (transformed) {
+          // Keep visibility consistent with the original vector
+          transformed.visible = vector.visible;
+          transformedVectors.push(transformed);
         }
-        
-        if (transformedVectors.length > 0) {
-          console.log("Setting transformed vectors");
-          setTransformedVectors(originalVectors, transformedVectors);
-        }
+      }
+      
+      if (transformedVectors.length > 0) {
+        console.log("Setting transformed vectors");
+        setTransformedVectors(originalVectors, transformedVectors);
       }
     } else if (!showTransformed) {
       // Clear transformed vectors if show transform is disabled

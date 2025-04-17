@@ -150,7 +150,7 @@ const VectorInput = () => {
                         style={{ backgroundColor: vector.color }}
                       />
                       <span className="font-medium">
-                        Vector {vector.components.length}D
+                        {vector.components.length}D
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -175,6 +175,19 @@ const VectorInput = () => {
                     </div>
                   </div>
                   
+                  {/* Vector name field */}
+                  <div className="mb-3">
+                    <Label htmlFor={`vector-name-${vector.id}`}>Vector Name</Label>
+                    <Input
+                      id={`vector-name-${vector.id}`}
+                      type="text"
+                      value={vector.label}
+                      onChange={(e) => updateVectorLabel(vector.id, e.target.value)}
+                      placeholder="Enter vector name"
+                    />
+                  </div>
+                  
+                  {/* Vector components */}
                   <div className="grid grid-cols-3 gap-2">
                     {vector.components.map((value, index) => (
                       <div key={index}>

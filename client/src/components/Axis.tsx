@@ -1,9 +1,14 @@
 import * as THREE from "three";
+import { Text } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 
-// Simplified Axis component without Text elements
+// Axis component with Text labels
 const Axis = () => {
   // Define axis length
   const axisLength = 10;
+  
+  // Get camera for billboard text
+  const { camera } = useThree();
   
   // Debug info
   console.log("Rendering Axis component, length:", axisLength);
@@ -51,6 +56,49 @@ const Axis = () => {
         <coneGeometry args={[0.2, 0.5, 8]} />
         <meshStandardMaterial color="blue" />
       </mesh>
+      
+      {/* Axis labels */}
+      {/* X Axis Label */}
+      <Text
+        position={[axisLength + 0.7, 0, 0]}
+        fontSize={0.8}
+        color="red"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.05}
+        outlineColor="#000000"
+        quaternion={camera.quaternion}
+      >
+        X
+      </Text>
+      
+      {/* Y Axis Label */}
+      <Text
+        position={[0, axisLength + 0.7, 0]}
+        fontSize={0.8}
+        color="green"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.05}
+        outlineColor="#000000"
+        quaternion={camera.quaternion}
+      >
+        Y
+      </Text>
+      
+      {/* Z Axis Label */}
+      <Text
+        position={[0, 0, axisLength + 0.7]}
+        fontSize={0.8}
+        color="blue"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.05}
+        outlineColor="#000000"
+        quaternion={camera.quaternion}
+      >
+        Z
+      </Text>
     </group>
   );
 };
