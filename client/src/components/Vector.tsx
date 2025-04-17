@@ -60,7 +60,7 @@ const Vector = ({ vector }: VectorProps) => {
   // Prevent dragging for transformed vectors
   const isDraggable = !isTransformed;
   
-  // Implement simplified drag functionality
+  // Ultra-simplified drag functionality that's reliable but less intuitive
   const dragBind = useDrag(
     ({ active, movement: [mx, my], event, memo = { 
       startComponents: [...components]
@@ -70,35 +70,53 @@ const Vector = ({ vector }: VectorProps) => {
       // Block event propagation
       if (event) {
         event.stopPropagation();
+        event.preventDefault();
       }
       
       setIsDragging(active);
       
       if (active) {
-        // Calculate a movement scale based on camera distance from the origin
-        const cameraDistance = camera.position.length();
-        const movementScale = cameraDistance / 15; // Adjust sensitivity
+        // Use very simple movement approach - X movement changes X, Y movement changes Y
+        // This isn't perspective correct but it's very reliable
         
-        // Calculate new vector components with scaled mouse movement
+        const sensitivity = 0.05; // Higher value = more movement
+        
+        // Calculate new positions with simple scaling
         let newComponents;
+        
         if (components.length === 2) {
+          // 2D vectors: X and Y
           newComponents = [
-            memo.startComponents[0] + mx * movementScale / 100,
-            memo.startComponents[1] - my * movementScale / 100 // Inverted Y for intuitive movement
+            memo.startComponents[0] + mx * sensitivity,
+            memo.startComponents[1] - my * sensitivity // Flip Y for natural feel
           ];
         } else {
-          // For 3D vectors, distribute movement across X and Z based on camera angle
-          const camXZ = new THREE.Vector2(camera.position.x, camera.position.z).normalize();
+          // For 3D vectors, we'll change different axes based on a simple heuristic
           
-          newComponents = [
-            memo.startComponents[0] + mx * movementScale * camXZ.y / 100,
-            memo.startComponents[1] - my * movementScale / 100, // Y is always vertical
-            memo.startComponents[2] - mx * movementScale * camXZ.x / 100  // Movement in Z depends on camera X position
-          ];
+          // If camera is more looking from above (Y-dominant view), change X and Z
+          // This is an extreme simplification but provides consistent behavior
+          if (Math.abs(camera.position.y) > Math.max(Math.abs(camera.position.x), Math.abs(camera.position.z))) {
+            // Looking from above: mouse X → vector X, mouse Y → vector Z
+            newComponents = [
+              memo.startComponents[0] + mx * sensitivity,
+              memo.startComponents[1], // Y unchanged
+              memo.startComponents[2] - my * sensitivity
+            ];
+          } else {
+            // Looking from side: mouse X → X or Z (depending on camera), mouse Y → Y
+            // Simplify to just basic X-Y when viewed from sides
+            newComponents = [
+              memo.startComponents[0] + mx * sensitivity,
+              memo.startComponents[1] - my * sensitivity,
+              memo.startComponents[2]
+            ];
+          }
         }
         
-        // Update vector in store
-        updateVector(vector.id, newComponents);
+        // Simple sanity check
+        if (newComponents.every(n => !isNaN(n) && isFinite(n))) {
+          updateVector(vector.id, newComponents);
+        }
       }
       
       return memo;
@@ -159,12 +177,22 @@ const Vector = ({ vector }: VectorProps) => {
             )
           ) 
           : new THREE.Euler(0, 0, 0)}
+        userData={{ vectorElement: true }}
         {...dragBind() as any}
         onClick={(e: any) => {
           e.stopPropagation();
           console.log("Vector clicked:", vector.id);
         }}
         onPointerDown={(e: any) => {
+          // Set a DOM attribute that our Controls can detect
+          const canvas = document.querySelector('canvas');
+          if (canvas) {
+            canvas.setAttribute('data-vector-element', 'true');
+            // Remove it after the interaction is complete
+            setTimeout(() => {
+              canvas.removeAttribute('data-vector-element');
+            }, 100);
+          }
           // Prevent orbit controls from taking over
           e.stopPropagation();
         }}
@@ -191,8 +219,8 @@ const Vector = ({ vector }: VectorProps) => {
         />
       </mesh>
       
-      {/* Simple vector label - avoiding advanced logic that might cause issues */}
-      {vector.visible && (
+      {/* Only show labels for non-transformed vectors */}
+      {vector.visible && !isTransformed && (
         <Text
           position={[end.x, end.y + 0.5, end.z]}
           fontSize={0.4}
