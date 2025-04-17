@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useVectorStore, Vector } from "../lib/stores/useVectorStore";
 import { 
   calculateMagnitude, 
@@ -10,26 +10,33 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 const VectorAnalysis = () => {
-  // Get all non-transformed vectors
-  const vectors = useVectorStore(state => 
-    state.vectors.filter(v => !v.isTransformed)
+  // Get all vectors from the store with a single subscription
+  const allVectors = useVectorStore(state => state.vectors);
+  
+  // Memoize the filtered vectors to prevent infinite re-renders
+  const vectors = useMemo(() => 
+    allVectors.filter(v => !v.isTransformed), 
+    [allVectors]
   );
 
-  // Find all transformed vectors
-  const transformedVectors = useVectorStore(state => 
-    state.vectors.filter(v => v.isTransformed)
+  const transformedVectors = useMemo(() => 
+    allVectors.filter(v => v.isTransformed),
+    [allVectors]
   );
 
-  // Group transformed vectors by their original vector
-  const transformationMap = new Map<string, Vector[]>();
-  transformedVectors.forEach(tv => {
-    if (tv.originalId) {
-      if (!transformationMap.has(tv.originalId)) {
-        transformationMap.set(tv.originalId, []);
+  // Memoize the transformation map to prevent recreating it every render
+  const transformationMap = useMemo(() => {
+    const map = new Map<string, Vector[]>();
+    transformedVectors.forEach(tv => {
+      if (tv.originalId) {
+        if (!map.has(tv.originalId)) {
+          map.set(tv.originalId, []);
+        }
+        map.get(tv.originalId)?.push(tv);
       }
-      transformationMap.get(tv.originalId)?.push(tv);
-    }
-  });
+    });
+    return map;
+  }, [transformedVectors]);
 
   // Check if we have at least one vector
   if (vectors.length === 0) {

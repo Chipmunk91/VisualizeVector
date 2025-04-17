@@ -215,6 +215,9 @@ const VectorInput = () => {
         </CardContent>
       </Card>
       
+      {/* Vector Analysis */}
+      <VectorAnalysis />
+      
       {/* Vector list */}
       <Card className="flex-1 overflow-y-auto">
         <CardHeader className="pb-2">
