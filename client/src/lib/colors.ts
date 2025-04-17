@@ -10,11 +10,71 @@ const VECTOR_COLORS = [
   "#999999", // Grey
 ];
 
+// Basic color palette for the color picker (first row)
+export const COLOR_PALETTE_BASIC = [
+  "#000000", // Black
+  "#404040", // Dark Gray
+  "#808080", // Medium Gray
+  "#990000", // Dark Red
+  "#FF0000", // Red
+  "#FF9900", // Orange
+  "#FFFF00", // Yellow
+  "#00FF00", // Green
+  "#00FFFF", // Cyan
+  "#0000FF", // Blue
+  "#9900FF", // Purple
+  "#FF00FF", // Magenta
+];
+
+// Extended color palette (second row)
+export const COLOR_PALETTE_EXTENDED = [
+  "#FFFFFF", // White
+  "#CCCCCC", // Light Gray
+  "#C0C0C0", // Silver
+  "#993300", // Brown
+  "#FF6666", // Light Red
+  "#FFCC99", // Light Orange
+  "#FFFF99", // Light Yellow
+  "#99FF99", // Light Green
+  "#99FFFF", // Light Cyan
+  "#9999FF", // Light Blue
+  "#CC99FF", // Light Purple
+  "#FF99FF", // Light Magenta
+];
+
+// Pastel color palette (third row)
+export const COLOR_PALETTE_PASTEL = [
+  "#FDFDFD", // Off White
+  "#F2F2F2", // Very Light Gray
+  "#D9D9D9", // Lighter Gray
+  "#FFE6E6", // Pastel Red
+  "#FFE1CC", // Pastel Orange
+  "#FFFFCC", // Pastel Yellow
+  "#E6FFE6", // Pastel Green
+  "#E6FFFF", // Pastel Cyan
+  "#E6E6FF", // Pastel Blue
+  "#F9E6FF", // Pastel Purple
+  "#FFE6FF", // Pastel Magenta
+  "#FFE6FF", // Pastel Pink
+];
+
 /**
  * Get a random color from the predefined list
+ * @param existingColors Optional array of colors to avoid
  * @returns A color string in hex format
  */
-export function getRandomColor(): string {
+export function getRandomColor(existingColors: string[] = []): string {
+  // If we have existing colors, try to pick one that's not used yet
+  if (existingColors.length > 0 && existingColors.length < VECTOR_COLORS.length) {
+    // Find colors that aren't already in use
+    const availableColors = VECTOR_COLORS.filter(color => !existingColors.includes(color));
+    if (availableColors.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availableColors.length);
+      return availableColors[randomIndex];
+    }
+  }
+  
+  // Otherwise just pick a random color
   const randomIndex = Math.floor(Math.random() * VECTOR_COLORS.length);
   return VECTOR_COLORS[randomIndex];
 }

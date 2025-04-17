@@ -20,6 +20,7 @@ interface VectorStore {
   removeVector: (id: string) => void;
   updateVector: (id: string, components: number[]) => void;
   updateVectorLabel: (id: string, label: string) => void;
+  updateVectorColor: (id: string, color: string) => void;
   toggleVectorVisibility: (id: string) => void;
   setTransformedVectors: (originalVectors: Vector[], transformedVectors: Vector[]) => void;
   clearTransformedVectors: () => void;
@@ -63,11 +64,16 @@ export const useVectorStore = create<VectorStore>((set) => ({
     const usedNumbers = getCurrentVectorNumbers(currentVectors);
     const nextNumber = getNextVectorNumber(usedNumbers);
     
-    // Create the new vector with sequential naming
+    // Get colors of existing vectors
+    const existingColors = currentVectors
+      .filter(v => !v.isTransformed)
+      .map(v => v.color);
+    
+    // Create the new vector with sequential naming and a unique color
     const newVector: Vector = {
       id,
       components,
-      color: getRandomColor(),
+      color: getRandomColor(existingColors),
       label: `v${nextNumber}`,
       visible: true,
       isTransformed: false,
@@ -109,6 +115,23 @@ export const useVectorStore = create<VectorStore>((set) => ({
         // Update transformed vector label - append "- T" suffix
         if (v.originalId === id) {
           return { ...v, label: `${label} - T` };
+        }
+        return v;
+      });
+      return { vectors: updatedVectors };
+    });
+  },
+  
+  updateVectorColor: (id, color) => {
+    set((state) => {
+      const updatedVectors = state.vectors.map((v) => {
+        // Update original vector color
+        if (v.id === id) {
+          return { ...v, color };
+        }
+        // Also update transformed vector color
+        if (v.originalId === id) {
+          return { ...v, color };
         }
         return v;
       });
