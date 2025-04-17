@@ -42,9 +42,9 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
         <div className="flex flex-col gap-1">
           {colorPalettes.map((palette, paletteIndex) => (
             <div key={paletteIndex} className="flex flex-wrap gap-1 justify-center mb-1">
-              {palette.map((color) => (
+              {palette.map((color, colorIndex) => (
                 <div
-                  key={color}
+                  key={`${paletteIndex}-${colorIndex}-${color}`}
                   className={`w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-125 ${
                     currentColor === color ? 'ring-2 ring-black ring-offset-1' : ''
                   }`}
