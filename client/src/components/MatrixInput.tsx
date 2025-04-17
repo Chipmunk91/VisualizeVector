@@ -99,8 +99,8 @@ const MatrixInput = () => {
               <div key={rowIndex} className="flex flex-wrap justify-center gap-2">
                 {Array.from({ length: cols }).map((_, colIndex) => (
                   <div key={`${rowIndex}-${colIndex}`} className="w-[80px] flex-grow-0 flex-shrink-0">
-                    <Label htmlFor={`m-${rowIndex}-${colIndex}`} className="whitespace-nowrap text-center block">
-                      M<sub>{rowIndex+1},{colIndex+1}</sub>
+                    <Label htmlFor={`m-${rowIndex}-${colIndex}`} className="whitespace-nowrap text-center block mb-2">
+                      M<sub className="relative bottom-0.5">{rowIndex+1},{colIndex+1}</sub>
                     </Label>
                     <Input
                       id={`m-${rowIndex}-${colIndex}`}
