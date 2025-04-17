@@ -1,21 +1,27 @@
 import { OrbitControls } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
 // This component adds orbit controls to the scene
 const Controls = () => {
   const { camera, gl } = useThree();
+  const isInitialized = useRef(false);
   
-  // Set initial camera position on mount
+  // Set initial camera position only once on mount
   useEffect(() => {
-    console.log("Setting initial camera position");
-    
-    // Position for good viewing angle of 3D space
-    camera.position.set(8, 8, 8);
-    camera.lookAt(0, 0, 0);
-    
-    // Log camera position for debugging
-    console.log("Camera position:", camera.position);
+    if (!isInitialized.current) {
+      console.log("Setting initial camera position");
+      
+      // Position for good viewing angle of 3D space
+      camera.position.set(8, 8, 8);
+      camera.lookAt(0, 0, 0);
+      
+      // Log camera position for debugging
+      console.log("Camera position:", camera.position);
+      
+      isInitialized.current = true;
+    }
   }, [camera]);
 
   return (

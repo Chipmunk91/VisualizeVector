@@ -72,9 +72,19 @@ const Vector = ({ vector }: VectorProps) => {
         />
       </mesh>
       
-      {/* Large sphere at the end point */}
-      <mesh position={end}>
-        <sphereGeometry args={[0.15, 16, 16]} />
+      {/* Arrow head at the end point */}
+      <mesh 
+        position={end}
+        rotation={arrowDirection.x || arrowDirection.z ? 
+          new THREE.Euler().setFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0), 
+              arrowDirection
+            )
+          ) 
+          : new THREE.Euler(0, 0, 0)}
+      >
+        <coneGeometry args={[0.15, 0.4, 16]} />
         <meshStandardMaterial 
           color={threeColor}
           opacity={opacity}

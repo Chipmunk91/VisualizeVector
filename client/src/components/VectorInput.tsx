@@ -73,6 +73,7 @@ const VectorInput = () => {
                     type="number" 
                     value={x} 
                     onChange={(e) => setX(e.target.value)} 
+                    step="any"
                   />
                 </div>
                 <div>
@@ -82,6 +83,7 @@ const VectorInput = () => {
                     type="number" 
                     value={y} 
                     onChange={(e) => setY(e.target.value)} 
+                    step="any"
                   />
                 </div>
               </div>
@@ -94,6 +96,7 @@ const VectorInput = () => {
                     type="number" 
                     value={x} 
                     onChange={(e) => setX(e.target.value)} 
+                    step="any"
                   />
                 </div>
                 <div>
@@ -103,6 +106,7 @@ const VectorInput = () => {
                     type="number" 
                     value={y} 
                     onChange={(e) => setY(e.target.value)} 
+                    step="any"
                   />
                 </div>
                 <div>
@@ -112,6 +116,7 @@ const VectorInput = () => {
                     type="number" 
                     value={z} 
                     onChange={(e) => setZ(e.target.value)} 
+                    step="any"
                   />
                 </div>
               </div>
@@ -182,6 +187,7 @@ const VectorInput = () => {
                             newComponents[index] = parseFloat(e.target.value) || 0;
                             updateVector(vector.id, newComponents);
                           }}
+                          step="any"
                         />
                       </div>
                     ))}
