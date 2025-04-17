@@ -62,9 +62,7 @@ const Vector = ({ vector }: VectorProps) => {
   
   // Improved drag functionality with better sensitivity and camera-based movement
   const dragBind = useDrag(
-    ({ active, movement: [mx, my], event, memo = { 
-      startComponents: [...components]
-    }}) => {
+    ({ active, movement: [mx, my], offset: [ox, oy], event, first, memo = null }) => {
       if (!isDraggable) return memo;
       
       // Block event propagation to prevent camera movement
@@ -75,6 +73,17 @@ const Vector = ({ vector }: VectorProps) => {
       
       setIsDragging(active);
       
+      // Initialize memo on first drag
+      if (first) {
+        memo = { 
+          startComponents: [...components],
+          startCamera: camera.position.clone(),
+          startQuaternion: camera.quaternion.clone(),
+        };
+      }
+      
+      if (!memo) return null;
+      
       if (active) {
         // Get camera direction vectors
         const cameraRight = new THREE.Vector3(1, 0, 0);
@@ -84,67 +93,76 @@ const Vector = ({ vector }: VectorProps) => {
         cameraRight.applyQuaternion(camera.quaternion);
         cameraUp.applyQuaternion(camera.quaternion);
         
-        // Cross product to get the forward direction
+        // Cross product to get the forward direction (away from camera)
         const cameraForward = new THREE.Vector3();
         cameraForward.crossVectors(cameraRight, cameraUp);
         
-        // Project movement onto camera vectors
-        const sensitivity = 0.08; // Increased for better response
+        // Adjust sensitivity based on vector size and camera distance
+        // This makes it easier to make fine adjustments to small vectors
+        const vectorLength = Math.sqrt(
+          components.reduce((sum, comp) => sum + comp * comp, 0)
+        );
+        const distanceToCamera = camera.position.length();
+        const baseSensitivity = 0.01;
+        const adaptiveSensitivity = baseSensitivity * 
+          Math.max(0.1, Math.min(1.0, distanceToCamera / 10)) * 
+          Math.max(1.0, Math.min(5.0, 1 / (vectorLength || 1) * 2));
         
-        // Calculate movements along camera-aligned axes
-        let movementX = mx * sensitivity;
-        let movementY = my * sensitivity;
+        // Calculate movements along camera-aligned axes with adaptive sensitivity
+        const movementX = mx * adaptiveSensitivity;
+        const movementY = my * adaptiveSensitivity;
         
         // Calculate new positions with camera-relative movement
         let newComponents;
         
         if (components.length === 2) {
           // 2D vectors: X and Y plane only
+          // For 2D, we'll use the screen-space X,Y for more intuitive movement
           newComponents = [
             memo.startComponents[0] + movementX,
             memo.startComponents[1] - movementY // Flip Y for natural feel
           ];
         } else {
-          // For 3D vectors, use camera direction to determine movement axes
-          // Get the dominant camera axis to adjust dragging behavior
-          const camX = Math.abs(camera.position.x);
-          const camY = Math.abs(camera.position.y);
-          const camZ = Math.abs(camera.position.z);
+          // For 3D vectors, we'll use a 3D raycasting approach
+          // Define a plane perpendicular to the camera view direction
+          const planeNormal = new THREE.Vector3().subVectors(
+            camera.position, 
+            new THREE.Vector3(components[0], components[1], components[2])
+          ).normalize();
           
-          // Default is horizontal plane movement (X-Z)
-          if (camY > Math.max(camX, camZ) * 0.7) {
-            // Camera is more above, drag in X-Z plane
-            newComponents = [
-              memo.startComponents[0] + movementX * cameraRight.x + movementY * cameraForward.x,
-              memo.startComponents[1], // Y unchanged when viewed from above
-              memo.startComponents[2] + movementX * cameraRight.z + movementY * cameraForward.z
-            ];
-          } else if (camZ > Math.max(camX, camY) * 0.7) {
-            // Camera is more from front/back, drag in X-Y plane
-            newComponents = [
-              memo.startComponents[0] + movementX * cameraRight.x - movementY * cameraUp.x,
-              memo.startComponents[1] + movementX * cameraRight.y - movementY * cameraUp.y,
-              memo.startComponents[2] // Z unchanged when viewed from front/back
-            ];
-          } else if (camX > Math.max(camY, camZ) * 0.7) {
-            // Camera is more from side, drag in Y-Z plane
-            newComponents = [
-              memo.startComponents[0], // X unchanged when viewed from side
-              memo.startComponents[1] - movementY * cameraUp.y + movementX * cameraForward.y,
-              memo.startComponents[2] - movementY * cameraUp.z + movementX * cameraForward.z
-            ];
-          } else {
-            // Mixed view, use all axes with less movement on farther axis
-            newComponents = [
-              memo.startComponents[0] + movementX * cameraRight.x - movementY * cameraUp.x,
-              memo.startComponents[1] + movementX * cameraRight.y - movementY * cameraUp.y,
-              memo.startComponents[2] + movementX * cameraRight.z - movementY * cameraUp.z
-            ];
-          }
+          // Create movement vector in 3D space
+          const rightMovement = new THREE.Vector3().copy(cameraRight).multiplyScalar(movementX);
+          const upMovement = new THREE.Vector3().copy(cameraUp).multiplyScalar(-movementY);
+          const movementVector = new THREE.Vector3().addVectors(rightMovement, upMovement);
+          
+          // Apply movement vector in a direction that maintains the perspective from camera view
+          // This creates a more natural feeling of "grabbing" the vector tip
+          newComponents = [
+            memo.startComponents[0] + movementVector.x,
+            memo.startComponents[1] + movementVector.y,
+            memo.startComponents[2] + movementVector.z
+          ];
+        }
+        
+        // Apply constraints: vectors should not be too large or too small
+        // Limit the max size to 20 units to keep vectors within reasonable view
+        const newLength = Math.sqrt(newComponents.reduce((sum, comp) => sum + comp * comp, 0));
+        if (newLength > 20) {
+          const scaleFactor = 20 / newLength;
+          newComponents = newComponents.map(comp => comp * scaleFactor);
+        }
+        
+        // Vectors should be at least 0.1 units to be visible
+        if (newLength < 0.1) {
+          const minLength = 0.1;
+          const scaleFactor = minLength / (newLength || 0.01); // Avoid division by zero
+          newComponents = newComponents.map(comp => comp * scaleFactor);
         }
         
         // Simple sanity check
         if (newComponents.every(n => !isNaN(n) && isFinite(n))) {
+          // Round to 2 decimal places for cleaner numbers
+          newComponents = newComponents.map(n => Math.round(n * 100) / 100);
           updateVector(vector.id, newComponents);
         }
       }
@@ -196,8 +214,7 @@ const Vector = ({ vector }: VectorProps) => {
       </mesh>
       
       {/* Arrow head at the end point - draggable */}
-      <mesh 
-        ref={arrowHeadRef}
+      <group
         position={end}
         rotation={arrowDirection.x || arrowDirection.z ? 
           new THREE.Euler().setFromQuaternion(
@@ -207,50 +224,97 @@ const Vector = ({ vector }: VectorProps) => {
             )
           ) 
           : new THREE.Euler(0, 0, 0)}
-        userData={{ vectorElement: true }}
-        {...dragBind() as any}
-        onClick={(e: any) => {
-          e.stopPropagation();
-          console.log("Vector clicked:", vector.id);
-        }}
-        onPointerDown={(e: any) => {
-          // Set a DOM attribute that our Controls can detect
-          const canvas = document.querySelector('canvas');
-          if (canvas) {
-            // Flag for dragging a vector to disable camera controls
-            canvas.setAttribute('data-vector-element', 'true');
-            
-            // Set global event listeners to ensure removal of attribute
-            const clearAttribute = () => {
-              canvas.removeAttribute('data-vector-element');
-              window.removeEventListener('mouseup', clearAttribute);
-              window.removeEventListener('mouseleave', clearAttribute);
-            };
-            
-            // Remove when interaction ends
-            window.addEventListener('mouseup', clearAttribute);
-            window.addEventListener('mouseleave', clearAttribute);
-          }
-          
-          // Prevent orbit controls from taking over
-          e.stopPropagation();
-          // Only call preventDefault if it's available
-          if (typeof e.preventDefault === 'function') {
-            e.preventDefault();
-          }
-        }}
-        onPointerEnter={() => isDraggable && setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
       >
-        <coneGeometry args={[hovered && isDraggable ? arrowHeadSize * 1.2 : arrowHeadSize, 0.4, 16]} />
-        <meshStandardMaterial 
-          color={isDragging ? new THREE.Color(0xffffff) : (hovered && isDraggable ? new THREE.Color(0xffffff) : threeColor)}
-          opacity={opacity}
-          transparent={true}
-          emissive={isDragging || (hovered && isDraggable) ? threeColor : undefined}
-          emissiveIntensity={isDragging ? 0.7 : (hovered && isDraggable ? 0.5 : 0)}
-        />
-      </mesh>
+        {/* Arrowhead */}
+        <mesh 
+          ref={arrowHeadRef}
+          userData={{ vectorElement: true }}
+          {...dragBind() as any}
+          onClick={(e: any) => {
+            e.stopPropagation();
+            console.log("Vector clicked:", vector.id);
+          }}
+          onPointerDown={(e: any) => {
+            // Set a DOM attribute that our Controls can detect
+            const canvas = document.querySelector('canvas');
+            if (canvas) {
+              // Flag for dragging a vector to disable camera controls
+              canvas.setAttribute('data-vector-element', 'true');
+              
+              // Set global event listeners to ensure removal of attribute
+              const clearAttribute = () => {
+                canvas.removeAttribute('data-vector-element');
+                window.removeEventListener('mouseup', clearAttribute);
+                window.removeEventListener('mouseleave', clearAttribute);
+              };
+              
+              // Remove when interaction ends
+              window.addEventListener('mouseup', clearAttribute);
+              window.addEventListener('mouseleave', clearAttribute);
+            }
+            
+            // Prevent orbit controls from taking over
+            e.stopPropagation();
+            // Only call preventDefault if it's available
+            if (typeof e.preventDefault === 'function') {
+              e.preventDefault();
+            }
+          }}
+          onPointerEnter={() => isDraggable && setHovered(true)}
+          onPointerLeave={() => setHovered(false)}
+        >
+          <coneGeometry args={[hovered && isDraggable ? arrowHeadSize * 1.2 : arrowHeadSize, 0.4, 16]} />
+          <meshStandardMaterial 
+            color={isDragging ? new THREE.Color(0xffffff) : (hovered && isDraggable ? new THREE.Color(0xffffff) : threeColor)}
+            opacity={opacity}
+            transparent={true}
+            emissive={isDragging || (hovered && isDraggable) ? threeColor : undefined}
+            emissiveIntensity={isDragging ? 0.7 : (hovered && isDraggable ? 0.5 : 0)}
+          />
+        </mesh>
+        
+        {/* Visual drag handle indicator for non-transformed vectors */}
+        {isDraggable && (
+          <group position={[0, 0.5, 0]} scale={0.2}>
+            {/* Only show drag handles when hovered or dragging */}
+            {(hovered || isDragging) && (
+              <>
+                {/* X handle */}
+                <mesh position={[0.6, 0, 0]} scale={[1.2, 0.05, 0.05]}>
+                  <boxGeometry />
+                  <meshStandardMaterial 
+                    color={new THREE.Color("#ff4444")} 
+                    emissive={new THREE.Color("#ff4444")}
+                    emissiveIntensity={0.5}
+                  />
+                </mesh>
+                
+                {/* Y handle */}
+                <mesh position={[0, 0.6, 0]} scale={[0.05, 1.2, 0.05]}>
+                  <boxGeometry />
+                  <meshStandardMaterial 
+                    color={new THREE.Color("#44ff44")} 
+                    emissive={new THREE.Color("#44ff44")}
+                    emissiveIntensity={0.5}
+                  />
+                </mesh>
+                
+                {/* Z handle for 3D vectors */}
+                {components.length > 2 && (
+                  <mesh position={[0, 0, 0.6]} scale={[0.05, 0.05, 1.2]}>
+                    <boxGeometry />
+                    <meshStandardMaterial 
+                      color={new THREE.Color("#4444ff")} 
+                      emissive={new THREE.Color("#4444ff")}
+                      emissiveIntensity={0.5}
+                    />
+                  </mesh>
+                )}
+              </>
+            )}
+          </group>
+        )}
+      </group>
       
       {/* Small sphere at the origin */}
       <mesh position={start}>
