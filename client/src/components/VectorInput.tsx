@@ -210,6 +210,30 @@ const VectorInput = () => {
             )}
           </div>
           
+          {/* Color selection */}
+          <div className="mb-4">
+            <Label htmlFor="vector-color">Vector Color</Label>
+            <div className="flex items-center mt-1 space-x-2">
+              <input
+                id="vector-color"
+                type="color"
+                value={selectedColor}
+                onChange={(e) => setSelectedColor(e.target.value)}
+                className="h-9 w-9 border border-input rounded-md cursor-pointer"
+              />
+              <div className="flex-1 grid grid-cols-4 gap-2">
+                {['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7', '#999999'].map(color => (
+                  <div 
+                    key={color}
+                    className={`h-9 w-full rounded-md cursor-pointer border ${selectedColor === color ? 'border-primary border-2' : 'border-input'}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setSelectedColor(color)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          
           <Button onClick={handleAddVector} className="w-full">
             Add Vector
           </Button>
@@ -283,6 +307,30 @@ const VectorInput = () => {
                         (e.target as HTMLInputElement).select();
                       }}
                     />
+                  </div>
+                  
+                  {/* Vector color */}
+                  <div className="mb-3">
+                    <Label htmlFor={`vector-color-${vector.id}`}>Vector Color</Label>
+                    <div className="flex items-center mt-1 space-x-2">
+                      <input
+                        id={`vector-color-${vector.id}`}
+                        type="color"
+                        value={vector.color}
+                        onChange={(e) => updateVectorColor(vector.id, e.target.value)}
+                        className="h-8 w-8 border border-input rounded-md cursor-pointer"
+                      />
+                      <div className="flex-1 grid grid-cols-4 gap-2">
+                        {['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7', '#999999'].map(color => (
+                          <div 
+                            key={color}
+                            className={`h-8 w-full rounded-md cursor-pointer border ${vector.color === color ? 'border-primary border-2' : 'border-input'}`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => updateVectorColor(vector.id, color)}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Vector components */}
