@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Vector as VectorType } from "../lib/stores/useVectorStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
 import { useDrag } from "@use-gesture/react";
-import { useThree } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import { vectorDistance } from "../lib/math";
 
@@ -13,11 +13,19 @@ interface VectorProps {
 
 const Vector = ({ vector }: VectorProps) => {
   const { updateVector } = useVectorStore();
-  const { camera } = useThree();
+  const { camera, raycaster, gl, mouse } = useThree();
+  
   const components = vector.components;
   const isTransformed = vector.isTransformed;
+  
+  // Create refs for interactive elements
   const arrowHeadRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  
+  // State for interaction and tracking
   const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{x: number, y: number} | null>(null);
+  const [originalComponents, setOriginalComponents] = useState<number[]>([]);
   
   // Debug logging (limited to reduce spam)
   useEffect(() => {
@@ -57,123 +65,105 @@ const Vector = ({ vector }: VectorProps) => {
   const arrowHeadSize = isTransformed ? 0.13 : 0.15;
   const lineWidth = isTransformed ? 0.04 : 0.05;
   
-  // Prevent dragging for transformed vectors
-  const isDraggable = !isTransformed;
+  // Prevent dragging for transformed vectors and default axis vectors
+  const isDefaultAxis = vector.id === "default-x" || vector.id === "default-y" || vector.id === "default-z";
+  const isDraggable = !isTransformed && !isDefaultAxis;
   
-  // Improved drag functionality with better sensitivity and camera-based movement
-  const dragBind = useDrag(
-    ({ active, movement: [mx, my], offset: [ox, oy], event, first, memo = null }) => {
-      if (!isDraggable) return memo;
+  // Use a direct frameloop to handle dragging
+  useFrame(() => {
+    if (isDragging && isDraggable) {
+      // Get current viewport mouse position
+      const vpMouse = new THREE.Vector2(mouse.x, mouse.y);
       
-      // Block event propagation to prevent camera movement
-      if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-      
-      setIsDragging(active);
-      
-      // Initialize memo on first drag
-      if (first) {
-        memo = { 
-          startComponents: [...components],
-          startCamera: camera.position.clone(),
-          startQuaternion: camera.quaternion.clone(),
-        };
-      }
-      
-      if (!memo) return null;
-      
-      if (active) {
-        // Get camera direction vectors
-        const cameraRight = new THREE.Vector3(1, 0, 0);
-        const cameraUp = new THREE.Vector3(0, 1, 0);
+      if (dragStart && originalComponents.length > 0) {
+        const sensitivity = 0.1;
+        const deltaX = (vpMouse.x - dragStart.x) * sensitivity;
+        const deltaY = (vpMouse.y - dragStart.y) * sensitivity;
         
-        // Apply camera rotation to get correct drag directions relative to view
-        cameraRight.applyQuaternion(camera.quaternion);
-        cameraUp.applyQuaternion(camera.quaternion);
+        // Create a plane to project mouse movement onto
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion));
+        const raycaster = new THREE.Raycaster();
         
-        // Cross product to get the forward direction (away from camera)
-        const cameraForward = new THREE.Vector3();
-        cameraForward.crossVectors(cameraRight, cameraUp);
+        // Get camera right and up vectors for screen-space movement
+        const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
         
-        // Adjust sensitivity based on vector size and camera distance
-        // This makes it easier to make fine adjustments to small vectors
-        const vectorLength = Math.sqrt(
-          components.reduce((sum, comp) => sum + comp * comp, 0)
-        );
-        const distanceToCamera = camera.position.length();
-        const baseSensitivity = 0.01;
-        const adaptiveSensitivity = baseSensitivity * 
-          Math.max(0.1, Math.min(1.0, distanceToCamera / 10)) * 
-          Math.max(1.0, Math.min(5.0, 1 / (vectorLength || 1) * 2));
+        // Scale based on distance
+        const distanceScale = camera.position.length() * 0.1;
         
-        // Calculate movements along camera-aligned axes with adaptive sensitivity
-        const movementX = mx * adaptiveSensitivity;
-        const movementY = my * adaptiveSensitivity;
-        
-        // Calculate new positions with camera-relative movement
         let newComponents;
-        
         if (components.length === 2) {
-          // 2D vectors: X and Y plane only
-          // For 2D, we'll use the screen-space X,Y for more intuitive movement
+          // 2D vectors - simpler to update
           newComponents = [
-            memo.startComponents[0] + movementX,
-            memo.startComponents[1] - movementY // Flip Y for natural feel
+            originalComponents[0] + deltaX * distanceScale,
+            originalComponents[1] - deltaY * distanceScale // Flip Y axis
           ];
         } else {
-          // For 3D vectors, we'll use a 3D raycasting approach
-          // Define a plane perpendicular to the camera view direction
-          const planeNormal = new THREE.Vector3().subVectors(
-            camera.position, 
-            new THREE.Vector3(components[0], components[1], components[2])
-          ).normalize();
-          
-          // Create movement vector in 3D space
-          const rightMovement = new THREE.Vector3().copy(cameraRight).multiplyScalar(movementX);
-          const upMovement = new THREE.Vector3().copy(cameraUp).multiplyScalar(-movementY);
-          const movementVector = new THREE.Vector3().addVectors(rightMovement, upMovement);
-          
-          // Apply movement vector in a direction that maintains the perspective from camera view
-          // This creates a more natural feeling of "grabbing" the vector tip
+          // 3D vectors - apply movement based on camera view
           newComponents = [
-            memo.startComponents[0] + movementVector.x,
-            memo.startComponents[1] + movementVector.y,
-            memo.startComponents[2] + movementVector.z
+            originalComponents[0] + deltaX * cameraRight.x * distanceScale - deltaY * cameraUp.x * distanceScale,
+            originalComponents[1] + deltaX * cameraRight.y * distanceScale - deltaY * cameraUp.y * distanceScale,
+            originalComponents[2] + deltaX * cameraRight.z * distanceScale - deltaY * cameraUp.z * distanceScale,
           ];
         }
         
-        // Apply constraints: vectors should not be too large or too small
-        // Limit the max size to 20 units to keep vectors within reasonable view
-        const newLength = Math.sqrt(newComponents.reduce((sum, comp) => sum + comp * comp, 0));
-        if (newLength > 20) {
-          const scaleFactor = 20 / newLength;
-          newComponents = newComponents.map(comp => comp * scaleFactor);
+        // Apply limits (max 20 units length, min 0.1 units length)
+        const length = Math.sqrt(newComponents.reduce((sum, val) => sum + val * val, 0));
+        if (length > 20) {
+          const scale = 20 / length;
+          newComponents = newComponents.map(c => c * scale);
+        } else if (length < 0.1) {
+          const scale = 0.1 / (length || 0.01); // Avoid division by zero
+          newComponents = newComponents.map(c => c * scale);
         }
         
-        // Vectors should be at least 0.1 units to be visible
-        if (newLength < 0.1) {
-          const minLength = 0.1;
-          const scaleFactor = minLength / (newLength || 0.01); // Avoid division by zero
-          newComponents = newComponents.map(comp => comp * scaleFactor);
-        }
+        // Round values for better display
+        newComponents = newComponents.map(val => Math.round(val * 100) / 100);
         
-        // Simple sanity check
-        if (newComponents.every(n => !isNaN(n) && isFinite(n))) {
-          // Round to 2 decimal places for cleaner numbers
-          newComponents = newComponents.map(n => Math.round(n * 100) / 100);
-          updateVector(vector.id, newComponents);
-        }
+        // Update vector in store
+        updateVector(vector.id, newComponents);
       }
-      
-      return memo;
-    },
-    { 
-      // Only allow dragging if not a transformed vector
-      enabled: isDraggable
     }
-  );
+  });
+  
+  // Define event functions
+  const handlePointerDown = (e: any) => {
+    if (!isDraggable) return;
+    
+    // Set a DOM attribute that our Controls can detect
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      // Flag for dragging a vector to disable camera controls
+      canvas.setAttribute('data-vector-element', 'true');
+      
+      // Set global event listeners to ensure removal of attribute
+      const clearAttribute = () => {
+        canvas.removeAttribute('data-vector-element');
+        setIsDragging(false);
+        setDragStart(null);
+        window.removeEventListener('mouseup', clearAttribute);
+        window.removeEventListener('mouseleave', clearAttribute);
+      };
+      
+      // Start dragging
+      setIsDragging(true);
+      setDragStart({ x: mouse.x, y: mouse.y });
+      setOriginalComponents([...components]);
+      
+      console.log("Starting drag with mouse at:", mouse.x, mouse.y);
+      console.log("Original components:", components);
+      
+      // Remove when interaction ends
+      window.addEventListener('mouseup', clearAttribute);
+      window.addEventListener('mouseleave', clearAttribute);
+    }
+    
+    // Prevent orbit controls from taking over
+    e.stopPropagation();
+    if (typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+  };
   
   // Use internal state for managing cursor
   const [hovered, setHovered] = useState(false);
@@ -229,37 +219,11 @@ const Vector = ({ vector }: VectorProps) => {
         <mesh 
           ref={arrowHeadRef}
           userData={{ vectorElement: true }}
-          {...dragBind() as any}
           onClick={(e: any) => {
             e.stopPropagation();
             console.log("Vector clicked:", vector.id);
           }}
-          onPointerDown={(e: any) => {
-            // Set a DOM attribute that our Controls can detect
-            const canvas = document.querySelector('canvas');
-            if (canvas) {
-              // Flag for dragging a vector to disable camera controls
-              canvas.setAttribute('data-vector-element', 'true');
-              
-              // Set global event listeners to ensure removal of attribute
-              const clearAttribute = () => {
-                canvas.removeAttribute('data-vector-element');
-                window.removeEventListener('mouseup', clearAttribute);
-                window.removeEventListener('mouseleave', clearAttribute);
-              };
-              
-              // Remove when interaction ends
-              window.addEventListener('mouseup', clearAttribute);
-              window.addEventListener('mouseleave', clearAttribute);
-            }
-            
-            // Prevent orbit controls from taking over
-            e.stopPropagation();
-            // Only call preventDefault if it's available
-            if (typeof e.preventDefault === 'function') {
-              e.preventDefault();
-            }
-          }}
+          onPointerDown={handlePointerDown}
           onPointerEnter={() => isDraggable && setHovered(true)}
           onPointerLeave={() => setHovered(false)}
         >
