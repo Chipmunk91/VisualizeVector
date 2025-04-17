@@ -234,7 +234,10 @@ const Vector = ({ vector }: VectorProps) => {
           
           // Prevent orbit controls from taking over
           e.stopPropagation();
-          e.preventDefault();
+          // Only call preventDefault if it's available
+          if (typeof e.preventDefault === 'function') {
+            e.preventDefault();
+          }
         }}
         onPointerEnter={() => isDraggable && setHovered(true)}
         onPointerLeave={() => setHovered(false)}

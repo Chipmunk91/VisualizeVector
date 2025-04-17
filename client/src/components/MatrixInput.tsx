@@ -1,4 +1,5 @@
 import { useMatrixStore, MatrixDimension } from "../lib/stores/useMatrixStore";
+import { useVectorStore } from "../lib/stores/useVectorStore";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -15,9 +16,17 @@ const MatrixInput = () => {
     }
   };
 
+  // Import from useVectorStore directly in component
+  const { clearTransformedVectors } = useVectorStore();
+  
   const handleDimensionChange = (value: string) => {
     if (['2x2', '2x3', '3x2', '3x3'].includes(value)) {
+      // Set the new dimension
       setDimension(value as MatrixDimension);
+      
+      // Clear transformed vectors when dimension changes
+      clearTransformedVectors();
+      console.log(`Matrix dimension changed to ${value}, clearing transformed vectors`);
     }
   };
 
@@ -65,17 +74,17 @@ const MatrixInput = () => {
         </CardContent>
       </Card>
       
-      <Card className="flex-1">
+      <Card className="flex-1 overflow-auto">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Matrix Values</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-y-auto">
           <div className="grid gap-4 mb-4">
             {Array.from({ length: rows }).map((_, rowIndex) => (
-              <div key={rowIndex} className="grid grid-cols-3 gap-2">
+              <div key={rowIndex} className={`grid grid-cols-${cols} gap-2`}>
                 {Array.from({ length: cols }).map((_, colIndex) => (
-                  <div key={`${rowIndex}-${colIndex}`}>
-                    <Label htmlFor={`m-${rowIndex}-${colIndex}`}>
+                  <div key={`${rowIndex}-${colIndex}`} className="min-w-[80px]">
+                    <Label htmlFor={`m-${rowIndex}-${colIndex}`} className="whitespace-nowrap">
                       M<sub>{rowIndex+1},{colIndex+1}</sub>
                     </Label>
                     <Input

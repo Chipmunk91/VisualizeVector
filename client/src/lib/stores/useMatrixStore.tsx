@@ -68,6 +68,9 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
         }
       }
       
+      // Note: Clearing transformed vectors is now handled in the MatrixInput component
+      // to avoid circular dependency between stores
+      
       return {
         matrix: {
           values: newValues,

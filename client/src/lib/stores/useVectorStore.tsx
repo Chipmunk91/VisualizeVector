@@ -30,11 +30,45 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   addVector: (components) => {
     const id = `vector-${Date.now()}`;
+    
+    // Get current vector numbers from existing vector names (v1, v2, etc.)
+    const getCurrentVectorNumbers = (vectors: Vector[]) => {
+      const usedNumbers = new Set<number>();
+      vectors.forEach(v => {
+        if (v.isTransformed) return; // Skip transformed vectors
+        
+        // Extract number from vector label (v1, v2, etc.)
+        const match = v.label.match(/^v(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num)) {
+            usedNumbers.add(num);
+          }
+        }
+      });
+      return usedNumbers;
+    };
+    
+    // Find the next available vector number
+    const getNextVectorNumber = (usedNumbers: Set<number>) => {
+      let nextNum = 1;
+      while (usedNumbers.has(nextNum)) {
+        nextNum++;
+      }
+      return nextNum;
+    };
+    
+    // Get the current state to access vectors
+    const currentVectors = useVectorStore.getState().vectors;
+    const usedNumbers = getCurrentVectorNumbers(currentVectors);
+    const nextNumber = getNextVectorNumber(usedNumbers);
+    
+    // Create the new vector with sequential naming
     const newVector: Vector = {
       id,
       components,
       color: getRandomColor(),
-      label: `Vector${components.length}`,
+      label: `v${nextNumber}`,
       visible: true,
       isTransformed: false,
     };
