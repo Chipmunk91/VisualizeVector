@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { COLOR_PALETTE_BASIC, COLOR_PALETTE_EXTENDED, COLOR_PALETTE_PASTEL } from '../lib/colors';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface ColorPickerProps {
   currentColor: string;
@@ -32,7 +31,6 @@ const rgbToHex = (r: number, g: number, b: number): string => {
 const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [colorMode, setColorMode] = useState<'rgb' | 'hsv'>('rgb');
   
   // RGB values for advanced picker
   const [red, setRed] = useState(0);
@@ -116,67 +114,71 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
     setIsOpen(false);
   };
   
-  // Draw the color gradient canvas when component mounts or colorMode changes
+  // Draw the color gradient canvas when component mounts or shows
   useEffect(() => {
+    if (!showAdvanced) return;
+    
+    // Draw color gradient
     if (colorGradientRef.current) {
       const canvas = colorGradientRef.current;
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
-        // Create a gradient with all hues
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        // Create rainbow gradient horizontally
+        const horizontalGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        horizontalGradient.addColorStop(0, '#FF0000'); // Red
+        horizontalGradient.addColorStop(0.17, '#FFFF00'); // Yellow
+        horizontalGradient.addColorStop(0.33, '#00FF00'); // Green
+        horizontalGradient.addColorStop(0.5, '#00FFFF'); // Cyan
+        horizontalGradient.addColorStop(0.67, '#0000FF'); // Blue
+        horizontalGradient.addColorStop(0.83, '#FF00FF'); // Magenta
+        horizontalGradient.addColorStop(1, '#FF0000'); // Back to Red
         
-        // Add rainbow colors
-        gradient.addColorStop(0, 'rgb(255, 0, 0)');     // Red
-        gradient.addColorStop(0.17, 'rgb(255, 255, 0)'); // Yellow
-        gradient.addColorStop(0.33, 'rgb(0, 255, 0)');   // Green
-        gradient.addColorStop(0.5, 'rgb(0, 255, 255)');  // Cyan
-        gradient.addColorStop(0.67, 'rgb(0, 0, 255)');   // Blue
-        gradient.addColorStop(0.83, 'rgb(255, 0, 255)'); // Magenta
-        gradient.addColorStop(1, 'rgb(255, 0, 0)');      // Back to Red
-        
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = horizontalGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Add white to black gradient vertically
+        // Create white to black gradient vertically
         const verticalGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
         verticalGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
         verticalGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
         verticalGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
         verticalGradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
         
+        ctx.globalCompositeOperation = 'multiply';
         ctx.fillStyle = verticalGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
     
+    // Draw grayscale gradient
     if (grayscaleRef.current) {
       const canvas = grayscaleRef.current;
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
-        // Create a gradient from black to white
+        // Create grayscale gradient
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#000000');
-        gradient.addColorStop(1, '#FFFFFF');
+        gradient.addColorStop(0, 'rgb(255, 255, 255)'); // White
+        gradient.addColorStop(1, 'rgb(0, 0, 0)'); // Black
         
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
-  }, [colorMode, showAdvanced]);
+  }, [showAdvanced]);
   
   // Handle click on color gradient
   const handleGradientClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (colorGradientRef.current) {
       const canvas = colorGradientRef.current;
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = Math.max(0, Math.min(canvas.width, e.clientX - rect.left));
+      const y = Math.max(0, Math.min(canvas.height, e.clientY - rect.top));
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
         const imageData = ctx.getImageData(x, y, 1, 1).data;
+        console.log("Color picked:", imageData[0], imageData[1], imageData[2]);
         setRed(imageData[0]);
         setGreen(imageData[1]);
         setBlue(imageData[2]);
@@ -189,10 +191,11 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
     if (grayscaleRef.current) {
       const canvas = grayscaleRef.current;
       const rect = canvas.getBoundingClientRect();
-      const y = e.clientY - rect.top;
+      const y = Math.max(0, Math.min(canvas.height, e.clientY - rect.top));
       
       // Calculate grayscale value (0-255) based on y position
       const value = Math.round((canvas.height - y) / canvas.height * 255);
+      console.log("Grayscale picked:", value);
       setRed(value);
       setGreen(value);
       setBlue(value);
@@ -259,6 +262,9 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Advanced Color Picker</DialogTitle>
+            <DialogDescription>
+              Select a custom color using the color picker, sliders, or hex input.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="flex flex-col md:flex-row gap-4">
@@ -289,26 +295,19 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
                   style={{ backgroundColor: hexValue }}
                 />
                 <div className="flex flex-col gap-1">
+                  <Label htmlFor="hex-color">Hex Color</Label>
                   <Input 
+                    id="hex-color"
                     type="text" 
                     value={hexValue} 
                     onChange={(e) => handleHexChange(e.target.value)}
                     className="w-32"
                   />
-                  <Select value={colorMode} onValueChange={(value) => setColorMode(value as 'rgb' | 'hsv')}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Color Mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="rgb">RGB</SelectItem>
-                      <SelectItem value="hsv">HSV</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
               
               {/* RGB sliders */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-2">
                 <div className="grid grid-cols-[1fr_60px] items-center gap-2">
                   <div>
                     <Label htmlFor="red">Red</Label>
