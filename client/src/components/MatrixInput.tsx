@@ -136,10 +136,15 @@ const MatrixInput = () => {
                       );
                     });
                     
+                    // Filter out nulls to satisfy TypeScript
+                    const validTransformedVectors = transformedVectors.filter(
+                      (v): v is NonNullable<typeof v> => v !== null
+                    );
+                    
                     // Update the store with valid transformations
                     useVectorStore.getState().setTransformedVectors(
                       originalVectors,
-                      transformedVectors
+                      validTransformedVectors
                     );
                   }
                 }}

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getRandomColor } from "../colors";
+import { useMatrixStore } from "./useMatrixStore";
 
 export interface Vector {
   id: string;
@@ -22,7 +23,7 @@ interface VectorStore {
   updateVectorLabel: (id: string, label: string) => void;
   updateVectorColor: (id: string, color: string) => void;
   toggleVectorVisibility: (id: string) => void;
-  setTransformedVectors: (originalVectors: Vector[], transformedVectors: Vector[]) => void;
+  setTransformedVectors: (originalVectors: Vector[], transformedVectors: (Vector | null)[]) => void;
   clearTransformedVectors: () => void;
 }
 
@@ -191,7 +192,7 @@ export const useVectorStore = create<VectorStore>((set) => ({
       console.log(`${numInvalid} vector(s) cannot be transformed with the current matrix dimensions.`);
       
       // Get matrix dimension for detailed reporting
-      const { matrix } = require('./useMatrixStore').useMatrixStore.getState();
+      const { matrix } = useMatrixStore.getState();
       const [rows, cols] = matrix.dimension.split('x').map(Number);
       
       // Compare with original vectors to find which ones are incompatible
