@@ -62,24 +62,32 @@ function App() {
     try {
       // Calculate transformations
       const transformedVectors = [];
+      const [matrixRows, matrixCols] = matrix.dimension.split('x').map(Number);
       
       for (const vector of originalVectors) {
-        const transformed = applyMatrixTransformation(matrix, vector);
-        if (transformed) {
-          transformedVectors.push(transformed);
+        // Check if matrix and vector dimensions are compatible
+        const isCompatible = 
+          (matrixCols === 2 && vector.components.length === 2) || 
+          (matrixCols === 3 && vector.components.length === 3);
+        
+        if (isCompatible) {
+          const transformed = applyMatrixTransformation(matrix, vector);
+          if (transformed) {
+            transformedVectors.push(transformed);
+          }
         }
       }
       
       // Only update if we have transformations to add
-      if (transformedVectors.length > 0) {
-        // Important: Use originalVectors as first parameter
-        setTransformedVectors(originalVectors, transformedVectors);
-        
-        // Store the current hash to prevent infinite loops
-        document.body.setAttribute('data-last-transform-hash', currentInputHash);
-      }
+      // Important: Use originalVectors as first parameter
+      setTransformedVectors(originalVectors, transformedVectors);
+      
+      // Store the current hash to prevent infinite loops
+      document.body.setAttribute('data-last-transform-hash', currentInputHash);
     } catch (error) {
       console.error("Error applying matrix transformations:", error);
+      // Clear transformed vectors on error
+      clearTransformedVectors();
     }
   }, [showTransformed, nonTransformedVectorsHash, matrixHash, clearTransformedVectors, setTransformedVectors, vectors, matrix]);
 

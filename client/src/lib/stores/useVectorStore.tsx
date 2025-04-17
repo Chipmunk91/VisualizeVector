@@ -30,11 +30,31 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   addVector: (components) => {
     const id = `vector-${Date.now()}`;
+    
+    // Find the next available vector number
+    // Get all original vectors (not transformed)
+    const originalVectors = useVectorStore.getState().vectors.filter(v => !v.isTransformed);
+    
+    // Extract existing vector numbers from labels like "v1", "v2"
+    const usedNumbers = new Set<number>();
+    originalVectors.forEach(v => {
+      const match = v.label.match(/^v(\d+)$/);
+      if (match) {
+        usedNumbers.add(parseInt(match[1], 10));
+      }
+    });
+    
+    // Find the lowest unused number
+    let vectorNumber = 1;
+    while (usedNumbers.has(vectorNumber)) {
+      vectorNumber++;
+    }
+    
     const newVector: Vector = {
       id,
       components,
       color: getRandomColor(),
-      label: `Vector${components.length}`,
+      label: `v${vectorNumber}`,
       visible: true,
       isTransformed: false,
     };

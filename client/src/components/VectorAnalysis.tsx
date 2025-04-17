@@ -205,7 +205,7 @@ const VectorAnalysis: React.FC = () => {
   }
   
   return (
-    <div className="p-3 bg-muted rounded-md text-sm">
+    <div className="p-3 bg-muted rounded-md text-sm max-h-[300px] overflow-y-auto">
       <p className="font-bold mb-2">Vector Analysis</p>
       
       {/* Magnitudes */}
@@ -214,7 +214,7 @@ const VectorAnalysis: React.FC = () => {
           <p className="font-semibold">Magnitudes:</p>
           <ul className="ml-2">
             {magnitudes.map((item, index) => (
-              <li key={`mag-${index}`}>
+              <li key={`mag-${index}`} className="truncate">
                 {item.label} = {item.value}
               </li>
             ))}
@@ -228,7 +228,7 @@ const VectorAnalysis: React.FC = () => {
           <p className="font-semibold">Dot Products:</p>
           <ul className="ml-2">
             {dotProducts.map((item, index) => (
-              <li key={`dot-${index}`}>
+              <li key={`dot-${index}`} className="truncate">
                 {item.label} = {item.value}
               </li>
             ))}
@@ -242,7 +242,7 @@ const VectorAnalysis: React.FC = () => {
           <p className="font-semibold">Cross Products:</p>
           <ul className="ml-2">
             {crossProducts.map((item, index) => (
-              <li key={`cross-${index}`}>
+              <li key={`cross-${index}`} className="truncate">
                 {item.label} = {item.value}
               </li>
             ))}
@@ -256,7 +256,7 @@ const VectorAnalysis: React.FC = () => {
           <p className="font-semibold">Transformation Distances:</p>
           <ul className="ml-2">
             {transformationDeltas.map((item, index) => (
-              <li key={`delta-${index}`}>
+              <li key={`delta-${index}`} className="truncate">
                 {item.label} = {item.value}
               </li>
             ))}
@@ -270,7 +270,7 @@ const VectorAnalysis: React.FC = () => {
           <p className="font-semibold">Matrix Properties:</p>
           <ul className="ml-2">
             {matrixProperties.map((item, index) => (
-              <li key={`prop-${index}`}>
+              <li key={`prop-${index}`} className="truncate">
                 {item.label}: {item.value}
               </li>
             ))}
