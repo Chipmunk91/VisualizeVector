@@ -32,20 +32,20 @@ function App() {
   
   // Process matrix transformations with better loop protection
   useLayoutEffect(() => {
-    // Skip if transformations are disabled
+    // Skip if transformations are disabled - handled in matrix store now
     if (!showTransformed) {
-      // Add a small delay before clearing transformed vectors
-      // This helps prevent the UI from freezing
-      setTimeout(() => {
-        clearTransformedVectors();
-      }, 10);
       return;
     }
     
-    // Force recalculation when toggling showTransformed back on
-    // Reset the stored hash to trigger recalculation
-    if (showTransformed) {
-      document.body.removeAttribute('data-last-transform-hash');
+    // Use try/catch for safety
+    try {
+      // Force recalculation when toggling showTransformed back on
+      // Reset the stored hash to trigger recalculation
+      if (showTransformed) {
+        document.body.removeAttribute('data-last-transform-hash');
+      }
+    } catch (error) {
+      console.error("Error in transformation effect:", error);
     }
     
     // Get only original vectors

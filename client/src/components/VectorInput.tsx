@@ -14,25 +14,35 @@ const VectorInput = () => {
   const [y, setY] = useState("0");
   const [z, setZ] = useState("0");
 
-  // Add a new vector - simplified
+  // Add a new vector - wrapped in a try/catch to prevent freezing
   const handleAddVector = () => {
-    // Safely parse inputs with default values
-    const xVal = parseFloat(x) || 0;
-    const yVal = parseFloat(y) || 0;
-    const zVal = parseFloat(z) || 0;
-    
-    // Create appropriate components array
-    const components = dimensions === "2d" 
-      ? [xVal, yVal]
-      : [xVal, yVal, zVal];
-    
-    // Add the vector
-    addVector(components);
-    
-    // Reset input fields
-    setX("0");
-    setY("0");
-    setZ("0");
+    try {
+      // Safely parse inputs with default values
+      const xVal = parseFloat(x) || 0;
+      const yVal = parseFloat(y) || 0;
+      const zVal = parseFloat(z) || 0;
+      
+      // Create appropriate components array
+      const components = dimensions === "2d" 
+        ? [xVal, yVal]
+        : [xVal, yVal, zVal];
+      
+      // Add the vector asynchronously to prevent UI freezing
+      setTimeout(() => {
+        addVector(components);
+      }, 0);
+      
+      // Reset input fields
+      setX("0");
+      setY("0");
+      setZ("0");
+    } catch (err) {
+      console.error("Error adding vector:", err);
+      // Still reset input fields on error
+      setX("0");
+      setY("0");
+      setZ("0");
+    }
   };
 
   // Filter out transformed vectors for the list

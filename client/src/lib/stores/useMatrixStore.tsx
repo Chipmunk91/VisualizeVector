@@ -78,21 +78,37 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
   },
   
   toggleShowTransformed: () => {
-    set((state) => {
-      // Force recalculation by triggering a state change in two steps
-      const newState = {
-        showTransformed: !state.showTransformed,
-      };
+    try {
+      const currentState = useMatrixStore.getState();
+      const newShowTransformed = !currentState.showTransformed;
       
-      // When toggling to show transformed vectors, we also set a flag
-      // to indicate that a recalculation should happen
-      if (!state.showTransformed) {
-        // We're turning it ON
-        // Clear any hash to force recalculation
-        document.body.removeAttribute('data-last-transform-hash');
+      // Update the state first
+      set({
+        showTransformed: newShowTransformed
+      });
+      
+      // When toggling to show transformed vectors, force recalculation
+      if (newShowTransformed) {
+        // We're turning it ON - clear hash to force recalculation
+        setTimeout(() => {
+          document.body.removeAttribute('data-last-transform-hash');
+          console.log("Forced recalculation by clearing hash");
+        }, 10);
+      } else {
+        // We're turning it OFF - safely clear transformed vectors
+        const clearVectors = require('../stores/useVectorStore').useVectorStore.getState().clearTransformedVectors;
+        if (typeof clearVectors === 'function') {
+          setTimeout(() => {
+            clearVectors();
+          }, 10);
+        }
       }
-      
-      return newState;
-    });
+    } catch (error) {
+      console.error("Error in toggleShowTransformed:", error);
+      // Still update the state if there's an error in the extra logic
+      set((state) => ({
+        showTransformed: !state.showTransformed,
+      }));
+    }
   },
 }));
