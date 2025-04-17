@@ -1,5 +1,6 @@
 import { useMatrixStore, MatrixDimension } from "../lib/stores/useMatrixStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
+import { applyMatrixTransformation } from "../lib/math";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
@@ -105,7 +106,7 @@ const MatrixInput = () => {
                   const [oldRows, oldCols] = dimension.split('x').map(Number);
                   const newDimension = `${oldCols}x${oldRows}`;
                   
-                  // First transpose the matrix, which will also set showTransformed to false
+                  // First transpose the matrix
                   transposeMatrix();
                   
                   // Add a hint for the user about compatibility
@@ -113,6 +114,34 @@ const MatrixInput = () => {
                     `Matrix transposed from ${dimension} to ${newDimension}. ` +
                     `This may change compatibility with vectors. A ${oldRows}x${oldCols} matrix requires vectors with ${oldCols} components.`
                   );
+                  
+                  // If we have Show Transformed Vectors enabled, refresh transformations
+                  // to ensure compatibility with the new matrix dimensions
+                  const showTransformed = useMatrixStore.getState().showTransformed;
+                  if (showTransformed) {
+                    // Force recalculation of transformed vectors with the transposed matrix
+                    useVectorStore.getState().clearTransformedVectors();
+                    
+                    // Get non-transformed vectors
+                    const originalVectors = useVectorStore
+                      .getState()
+                      .vectors
+                      .filter(v => !v.isTransformed);
+                      
+                    // Create transformed versions if possible
+                    const transformedVectors = originalVectors.map(vector => {
+                      return applyMatrixTransformation(
+                        useMatrixStore.getState().matrix,
+                        vector
+                      );
+                    });
+                    
+                    // Update the store with valid transformations
+                    useVectorStore.getState().setTransformedVectors(
+                      originalVectors,
+                      transformedVectors
+                    );
+                  }
                 }}
                 className="w-full"
               >
