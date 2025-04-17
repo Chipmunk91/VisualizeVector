@@ -51,9 +51,9 @@ const Vector = ({ vector }: VectorProps) => {
   const threeColor = new THREE.Color(vector.color);
   
   // Adjust opacity and size for transformed vectors
-  const opacity = isTransformed ? 0.6 : 1;
-  const arrowHeadSize = isTransformed ? 0.15 : 0.2;
-  const lineWidth = isTransformed ? 2 : 3;
+  const opacity = vector.opacity !== undefined ? vector.opacity : (isTransformed ? 0.6 : 1);
+  const arrowHeadSize = isTransformed ? 0.13 : 0.15;
+  const lineWidth = isTransformed ? 0.04 : 0.05;
   
   // Prevent dragging for transformed vectors
   const isDraggable = !isTransformed;
@@ -128,7 +128,7 @@ const Vector = ({ vector }: VectorProps) => {
       {/* Visible cylinder for the arrow line */}
       <mesh
         position={midPoint}
-        scale={[0.05, arrowLength, 0.05]}
+        scale={[lineWidth, arrowLength, lineWidth]}
         rotation={arrowDirection.x || arrowDirection.z ? 
           new THREE.Euler().setFromQuaternion(
             new THREE.Quaternion().setFromUnitVectors(
@@ -142,7 +142,7 @@ const Vector = ({ vector }: VectorProps) => {
         <meshStandardMaterial 
           color={threeColor}
           opacity={opacity}
-          transparent={isTransformed}
+          transparent={true}
         />
       </mesh>
       
@@ -170,11 +170,11 @@ const Vector = ({ vector }: VectorProps) => {
         onPointerEnter={() => isDraggable && setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
-        <coneGeometry args={[hovered && isDraggable ? 0.18 : 0.15, 0.4, 16]} />
+        <coneGeometry args={[hovered && isDraggable ? arrowHeadSize * 1.2 : arrowHeadSize, 0.4, 16]} />
         <meshStandardMaterial 
           color={isDragging ? new THREE.Color(0xffffff) : (hovered && isDraggable ? new THREE.Color(0xffffff) : threeColor)}
           opacity={opacity}
-          transparent={isTransformed}
+          transparent={true}
           emissive={isDragging || (hovered && isDraggable) ? threeColor : undefined}
           emissiveIntensity={isDragging ? 0.7 : (hovered && isDraggable ? 0.5 : 0)}
         />

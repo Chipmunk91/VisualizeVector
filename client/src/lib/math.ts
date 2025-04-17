@@ -44,6 +44,7 @@ export function applyMatrixTransformation(
       visible: true,
       isTransformed: true,
       originalId: vector.id,
+      opacity: 0.6  // Make transformed vectors semi-transparent
     };
   } catch (error) {
     console.error("Error applying transformation:", error);

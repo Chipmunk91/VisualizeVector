@@ -9,7 +9,9 @@ export interface Vector {
   visible: boolean;
   // For showing original and transformed vectors
   isTransformed: boolean;
-  originalId?: string; 
+  originalId?: string;
+  // For controlling transparency
+  opacity?: number;
 }
 
 interface VectorStore {
