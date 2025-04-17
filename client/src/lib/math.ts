@@ -15,12 +15,17 @@ export function applyMatrixTransformation(
   matrix: Matrix,
   vector: Vector
 ): Vector | null {
+  // Exit early if the vector is already transformed to avoid loops
+  if (vector.isTransformed) {
+    return null;
+  }
+
   const [mRows, mCols] = matrix.dimension.split('x').map(Number);
   const vDim = vector.components.length;
   
   // Check compatibility
   if (mCols !== vDim) {
-    console.warn(`Matrix-vector dimension mismatch: ${mCols} columns ≠ ${vDim} vector dimensions`);
+    // Don't log warning - this is normal and expected
     return null;
   }
   
@@ -35,13 +40,19 @@ export function applyMatrixTransformation(
     // Convert result back to array
     const resultArray = Array.isArray(result) ? result : [result];
     
+    // Round values to 6 decimal places to avoid floating point issues
+    const roundedArray = resultArray.map(val => Math.round(val * 1000000) / 1000000);
+    
+    // Generate a stable, unique ID to avoid recreating the same vector
+    const uniqueId = `transformed-${vector.id}-${Date.now()}`;
+    
     // Create a new vector with the transformed components
     return {
-      id: `transformed-${vector.id}`,
-      components: resultArray,
+      id: uniqueId,
+      components: roundedArray,
       color: vector.color,
       label: `${vector.label} - T`,
-      visible: true,
+      visible: vector.visible, // Match original visibility
       isTransformed: true,
       originalId: vector.id,
       opacity: 0.6  // Make transformed vectors semi-transparent

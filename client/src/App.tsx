@@ -30,7 +30,7 @@ function App() {
   
   const matrixHash = useMemo(() => JSON.stringify(matrix), [matrix]);
   
-  // Process matrix transformations in one effect that depends on the derived hashes
+  // Process matrix transformations with better loop protection
   useLayoutEffect(() => {
     // Skip if transformations are disabled
     if (!showTransformed) {
@@ -44,6 +44,20 @@ function App() {
       return;
     }
 
+    // Protection against infinite loops - use a ref to track last transformation
+    // and skip if inputs are identical
+    const currentInputHash = `${nonTransformedVectorsHash}-${matrixHash}`;
+    
+    // Store the last transformation input hash as a data attribute on document body
+    // This is a simple way to persist it between renders without useRef
+    const lastTransformationHash = document.body.getAttribute('data-last-transform-hash');
+    
+    // Skip if this is the same input as last time
+    if (lastTransformationHash === currentInputHash) {
+      console.log("Skipping identical transformation");
+      return;
+    }
+    
     // Calculate transformed vectors
     try {
       // Calculate transformations
@@ -58,7 +72,11 @@ function App() {
       
       // Only update if we have transformations to add
       if (transformedVectors.length > 0) {
-        setTransformedVectors([], transformedVectors);
+        // Important: Use originalVectors as first parameter
+        setTransformedVectors(originalVectors, transformedVectors);
+        
+        // Store the current hash to prevent infinite loops
+        document.body.setAttribute('data-last-transform-hash', currentInputHash);
       }
     } catch (error) {
       console.error("Error applying matrix transformations:", error);

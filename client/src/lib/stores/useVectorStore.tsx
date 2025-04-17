@@ -122,23 +122,26 @@ export const useVectorStore = create<VectorStore>((set) => ({
   },
   
   setTransformedVectors: (originalVectors, transformedVectors) => {
+    // Add debug logs
+    console.log("Setting transformed vectors:", transformedVectors.length);
+    
     set((state) => {
       try {
-        // First, filter out any existing transformed vectors
+        // First, remove all existing transformed vectors
         const nonTransformedVectors = state.vectors.filter(v => !v.isTransformed);
         
-        // For each transformed vector, find its original and match visibility
+        // Create a map of originalId to visibility for faster lookup
+        const originalVisibilityMap = new Map();
+        nonTransformedVectors.forEach(v => {
+          originalVisibilityMap.set(v.id, v.visible);
+        });
+        
+        // Sync visibility for each transformed vector
         const syncedTransformedVectors = transformedVectors.map(transformed => {
-          // Default visibility to true if original can't be found
-          let visibility = true;
-          
-          // Find original by originalId and match visibility
-          if (transformed.originalId) {
-            const original = nonTransformedVectors.find(v => v.id === transformed.originalId);
-            if (original) {
-              visibility = original.visible;
-            }
-          }
+          // Get visibility from map with default true
+          const visibility = transformed.originalId ? 
+            (originalVisibilityMap.get(transformed.originalId) ?? true) : 
+            true;
           
           // Return transformed vector with matched visibility
           return {
@@ -147,10 +150,38 @@ export const useVectorStore = create<VectorStore>((set) => ({
           };
         });
         
-        // Return updated state with all vectors
-        return {
+        // Return updated state
+        const newState = {
           vectors: [...nonTransformedVectors, ...syncedTransformedVectors]
         };
+        
+        // Double check for duplicates
+        const uniqueIds = new Set();
+        const hasDuplicates = newState.vectors.some(v => {
+          if (uniqueIds.has(v.id)) return true;
+          uniqueIds.add(v.id);
+          return false;
+        });
+        
+        // If duplicates found, log warning and filter them out
+        if (hasDuplicates) {
+          console.warn("Duplicate vector IDs detected - filtering duplicates");
+          
+          // Keep only the first occurrence of each vector ID
+          const uniqueVectors: any[] = [];
+          const seenIds = new Set();
+          
+          newState.vectors.forEach(v => {
+            if (!seenIds.has(v.id)) {
+              uniqueVectors.push(v);
+              seenIds.add(v.id);
+            }
+          });
+          
+          return { vectors: uniqueVectors };
+        }
+        
+        return newState;
       } catch (error) {
         console.error("Error in setTransformedVectors:", error);
         // Return unchanged state on error
