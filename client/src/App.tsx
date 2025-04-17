@@ -52,6 +52,12 @@ function App() {
       clearTransformedVectors();
     }
     
+    // Reset transformation hash when toggling back on, to force regeneration
+    if (showTransformed && !wasShowingRef.current) {
+      console.log("Show transformed CHANGED to true, forcing regeneration");
+      lastTransformHashRef.current = ''; // Reset hash to force regeneration
+    }
+    
     // Update ref to current value
     wasShowingRef.current = showTransformed;
     
