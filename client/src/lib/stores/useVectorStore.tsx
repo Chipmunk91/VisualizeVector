@@ -249,10 +249,20 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   clearTransformedVectors: () => {
     console.log("Clearing transformed vectors");
-    // Simpler implementation to avoid issues
-    set((state) => {
-      const originalVectors = state.vectors.filter(v => !v.isTransformed);
-      return { vectors: originalVectors };
+    
+    // Use state directly with the set function
+    set(state => {
+      // Check if there are any transformed vectors to clear
+      const hasTransformedVectors = state.vectors.some(v => v.isTransformed);
+      
+      // Only update state if there are transformed vectors to clear
+      if (hasTransformedVectors) {
+        const originalVectors = state.vectors.filter(v => !v.isTransformed);
+        return { vectors: originalVectors };
+      } 
+      
+      console.log("No transformed vectors to clear, skipping update");
+      return state; // Return unchanged state
     });
   }
 }));

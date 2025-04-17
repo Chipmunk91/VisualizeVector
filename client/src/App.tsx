@@ -36,16 +36,27 @@ function App() {
   // Track whether we've processed the initial transform state
   const initialProcessRef = useRef(false);
   
+  // Track previous showTransformed state
+  const wasShowingRef = useRef(showTransformed);
+  
   // Process matrix transformations with better loop protection
   useLayoutEffect(() => {
     // Always log current showTransformed state for debugging
     console.log("ShowTransformed state:", showTransformed);
     
-    // Skip if transformations are disabled
-    if (!showTransformed) {
-      // Only clear if we're changing from true to false
-      console.log("Show transformed disabled, clearing transformed vectors");
+    // Avoid running clear on every render when showTransformed is false
+    // Only run it once when the value changes from true to false
+    if (!showTransformed && wasShowingRef.current) {
+      // Only clear when changing from true to false
+      console.log("Show transformed CHANGED to false, clearing transformed vectors");
       clearTransformedVectors();
+    }
+    
+    // Update ref to current value
+    wasShowingRef.current = showTransformed;
+    
+    // Skip rest of the effect if transformations are disabled
+    if (!showTransformed) {
       return;
     }
     
