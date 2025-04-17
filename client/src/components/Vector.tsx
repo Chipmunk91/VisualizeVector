@@ -58,90 +58,46 @@ const Vector = ({ vector }: VectorProps) => {
   // Prevent dragging for transformed vectors
   const isDraggable = !isTransformed;
   
-  // Implement drag functionality
+  // Implement simplified drag functionality
   const dragBind = useDrag(
-    ({ active, xy: [x, y], initial: [x0, y0], event, memo = { 
-      cameraPos: camera.position.clone(),
-      initialComponents: [...components]
+    ({ active, movement: [mx, my], event, memo = { 
+      startComponents: [...components]
     }}) => {
       if (!isDraggable) return memo;
       
-      // Always stop propagation to prevent orbit controls from activating
+      // Block event propagation
       if (event) {
         event.stopPropagation();
-        event.preventDefault();
-      }
-      
-      // When drag starts/ends, emit custom events to disable/enable orbit controls
-      if (active && !isDragging) {
-        // Starting a drag
-        document.dispatchEvent(new Event('vectorDragStart'));
-      } else if (!active && isDragging) {
-        // Ending a drag
-        document.dispatchEvent(new Event('vectorDragEnd'));
       }
       
       setIsDragging(active);
       
-      if (active && arrowHeadRef.current) {
-        try {
-          // Use a drag plane that's aligned with the screen for more intuitive control
-          // First, create a plane that's perpendicular to the camera view
-          const viewPlaneNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion);
+      if (active) {
+        // Calculate a movement scale based on camera distance from the origin
+        // This helps make the drag movement more natural
+        const cameraDistance = camera.position.length();
+        const movementScale = cameraDistance / 15; // Adjust this divisor to tune sensitivity
+        
+        // Calculate new vector components with scaled mouse movement
+        let newComponents;
+        if (components.length === 2) {
+          newComponents = [
+            memo.startComponents[0] + mx * movementScale / 100,
+            memo.startComponents[1] - my * movementScale / 100 // Inverted Y for intuitive movement
+          ];
+        } else {
+          // For 3D vectors, distribute movement across X and Z based on camera angle
+          const camXZ = new THREE.Vector2(camera.position.x, camera.position.z).normalize();
           
-          // Create a plane containing the vector endpoint and facing the camera
-          const dragPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(
-            viewPlaneNormal,
-            end.clone()
-          );
-          
-          // Create raycasters for initial and current mouse positions
-          const initialMouse = new THREE.Vector2(
-            (x0 / size.width) * 2 - 1,
-            -(y0 / size.height) * 2 + 1
-          );
-          const currentMouse = new THREE.Vector2(
-            (x / size.width) * 2 - 1,
-            -(y / size.height) * 2 + 1
-          );
-          
-          // Get the 3D points where the rays intersect the drag plane
-          raycaster.setFromCamera(initialMouse, camera);
-          const initialPoint = new THREE.Vector3();
-          raycaster.ray.intersectPlane(dragPlane, initialPoint);
-          
-          raycaster.setFromCamera(currentMouse, camera);
-          const currentPoint = new THREE.Vector3();
-          raycaster.ray.intersectPlane(dragPlane, currentPoint);
-          
-          if (initialPoint && currentPoint) {
-            // Calculate movement in world space
-            const worldMovement = new THREE.Vector3().subVectors(
-              currentPoint,
-              initialPoint
-            );
-            
-            // Apply movement - use the memorized initial components to avoid drift
-            let newComponents;
-            if (memo.initialComponents.length === 2) {
-              newComponents = [
-                memo.initialComponents[0] + worldMovement.x,
-                memo.initialComponents[1] + worldMovement.y
-              ];
-            } else {
-              newComponents = [
-                memo.initialComponents[0] + worldMovement.x,
-                memo.initialComponents[1] + worldMovement.y,
-                memo.initialComponents[2] + worldMovement.z
-              ];
-            }
-            
-            // Update vector in store
-            updateVector(vector.id, newComponents);
-          }
-        } catch (error) {
-          console.error("Error during drag operation:", error);
+          newComponents = [
+            memo.startComponents[0] + mx * movementScale * camXZ.y / 100,
+            memo.startComponents[1] - my * movementScale / 100, // Y is always vertical
+            memo.startComponents[2] - mx * movementScale * camXZ.x / 100  // Movement in Z depends on camera X position
+          ];
         }
+        
+        // Update vector in store
+        updateVector(vector.id, newComponents);
       }
       
       return memo;

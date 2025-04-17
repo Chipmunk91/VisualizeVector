@@ -18,50 +18,53 @@ function App() {
   const { matrix, showTransformed } = useMatrixStore();
   const { vectors, setTransformedVectors, clearTransformedVectors } = useVectorStore();
   
-  // Apply transformations in the parent component
-  // Use a ref to track if we're performing an update to prevent loops
-  const isUpdating = React.useRef(false);
+  // Use a ref to avoid infinite loops
+  const prevVectorsRef = React.useRef<string>("");
+  const prevMatrixRef = React.useRef<string>("");
   
-  // This effect runs once on component mount to set up a timer for updates
+  // This effect applies the matrix transformations when needed
   useEffect(() => {
-    // Create an interval to check and apply transformations
-    const interval = setInterval(() => {
-      // Skip if already updating
-      if (isUpdating.current) return;
-      isUpdating.current = true;
-      
-      try {
-        // Only apply transformations if transform display is enabled
-        if (showTransformed && vectors.length > 0) {
-          // Filter only original vectors
-          const originalVectors = vectors.filter(v => !v.isTransformed);
-          
-          if (originalVectors.length > 0) {
-            // Apply transformations
-            const transformedVectors = [];
-            
-            for (const vector of originalVectors) {
-              const transformed = applyMatrixTransformation(matrix, vector);
-              if (transformed) {
-                transformedVectors.push(transformed);
-              }
-            }
-            
-            if (transformedVectors.length > 0) {
-              setTransformedVectors(originalVectors, transformedVectors);
-            }
-          }
-        } else {
-          // Clear transformed vectors if show transform is disabled
-          clearTransformedVectors();
-        }
-      } finally {
-        isUpdating.current = false;
-      }
-    }, 500); // Check every 500ms
+    // Create string representations for comparison to prevent unnecessary updates
+    const vectorsString = JSON.stringify(vectors.map(v => !v.isTransformed ? v : null).filter(Boolean));
+    const matrixString = JSON.stringify(matrix);
     
-    return () => clearInterval(interval);
-  }, []); // Empty dependency array - only run on mount
+    // Only process if something changed or show/hide toggle changed
+    if (
+      showTransformed && 
+      vectors.length > 0 && 
+      (vectorsString !== prevVectorsRef.current || 
+       matrixString !== prevMatrixRef.current)
+    ) {
+      // Update refs to current values
+      prevVectorsRef.current = vectorsString;
+      prevMatrixRef.current = matrixString;
+      
+      // Filter only original vectors
+      const originalVectors = vectors.filter(v => !v.isTransformed);
+      
+      if (originalVectors.length > 0) {
+        console.log("Applying matrix transformations to vectors");
+        
+        // Apply transformations
+        const transformedVectors = [];
+        
+        for (const vector of originalVectors) {
+          const transformed = applyMatrixTransformation(matrix, vector);
+          if (transformed) {
+            transformedVectors.push(transformed);
+          }
+        }
+        
+        if (transformedVectors.length > 0) {
+          console.log("Setting transformed vectors");
+          setTransformedVectors(originalVectors, transformedVectors);
+        }
+      }
+    } else if (!showTransformed) {
+      // Clear transformed vectors if show transform is disabled
+      clearTransformedVectors();
+    }
+  }, [matrix, vectors, showTransformed, setTransformedVectors, clearTransformedVectors]);
 
   return (
     <div className="flex h-screen w-screen bg-background text-foreground">
