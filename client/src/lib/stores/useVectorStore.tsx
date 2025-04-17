@@ -182,6 +182,32 @@ export const useVectorStore = create<VectorStore>((set) => ({
     // Add debug logs
     console.log("Setting transformed vectors:", transformedVectors.length);
     
+    // Filter out null values which represent incompatible transformations
+    const validTransformedVectors = transformedVectors.filter(v => v !== null);
+    
+    // Check for incompatible vectors
+    if (transformedVectors.length > validTransformedVectors.length) {
+      const numInvalid = transformedVectors.length - validTransformedVectors.length;
+      console.log(`${numInvalid} vector(s) cannot be transformed with the current matrix dimensions.`);
+      
+      // Get matrix dimension for detailed reporting
+      const { matrix } = require('./useMatrixStore').useMatrixStore.getState();
+      const [rows, cols] = matrix.dimension.split('x').map(Number);
+      
+      // Compare with original vectors to find which ones are incompatible
+      // Extract originalIds from validTransformedVectors
+      const validOriginalIds = validTransformedVectors
+        .map(v => v.originalId)
+        .filter(id => id !== undefined);
+        
+      // Find vectors that didn't get transformed successfully
+      originalVectors.forEach(v => {
+        if (!validOriginalIds.includes(v.id)) {
+          console.log(`- Vector "${v.label}" (${v.components.length}D) is incompatible with the current ${matrix.dimension} matrix. A ${matrix.dimension} matrix requires vectors with ${cols} components.`);
+        }
+      });
+    }
+    
     set((state) => {
       try {
         // First, remove all existing transformed vectors
@@ -194,7 +220,7 @@ export const useVectorStore = create<VectorStore>((set) => ({
         });
         
         // Sync visibility for each transformed vector
-        const syncedTransformedVectors = transformedVectors.map(transformed => {
+        const syncedTransformedVectors = validTransformedVectors.map(transformed => {
           // Get visibility from map with default true
           const visibility = transformed.originalId ? 
             (originalVisibilityMap.get(transformed.originalId) ?? true) : 

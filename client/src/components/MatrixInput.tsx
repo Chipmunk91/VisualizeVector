@@ -67,7 +67,31 @@ const MatrixInput = () => {
                 type="checkbox"
                 id="show-transformed"
                 checked={showTransformed}
-                onChange={toggleShowTransformed}
+                onChange={() => {
+                  // Get current dimension info for verification
+                  const { dimension } = useMatrixStore.getState().matrix;
+                  const [rows, cols] = dimension.split('x').map(Number);
+                  const vectors = useVectorStore.getState().vectors.filter(v => !v.isTransformed);
+                  
+                  // Check if any vectors would be compatible
+                  const compatibleVectors = vectors.filter(v => v.components.length === cols);
+                  const incompatibleVectors = vectors.filter(v => v.components.length !== cols);
+                  
+                  if (!showTransformed && incompatibleVectors.length > 0) {
+                    // Warn about incompatible vectors
+                    console.log(
+                      `Warning: ${incompatibleVectors.length} vector(s) are incompatible with the current ${dimension} matrix. ` +
+                      `For a ${dimension} matrix, vectors must have ${cols} components.`
+                    );
+                    
+                    // List incompatible vectors
+                    incompatibleVectors.forEach(v => {
+                      console.log(`- Vector "${v.label}" has ${v.components.length} components but needs ${cols} for compatibility.`);
+                    });
+                  }
+                  
+                  toggleShowTransformed();
+                }}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <Label htmlFor="show-transformed">Show Transformed Vectors</Label>
@@ -76,12 +100,19 @@ const MatrixInput = () => {
             <div>
               <Button 
                 onClick={() => {
-                  // First transpose the matrix
+                  // Get current matrix info for logging
+                  const { dimension } = useMatrixStore.getState().matrix;
+                  const [oldRows, oldCols] = dimension.split('x').map(Number);
+                  const newDimension = `${oldCols}x${oldRows}`;
+                  
+                  // First transpose the matrix, which will also set showTransformed to false
                   transposeMatrix();
                   
-                  // Clear transformed vectors because dimensions have changed
-                  // This maintains correct mathematical behavior
-                  clearTransformedVectors();
+                  // Add a hint for the user about compatibility
+                  console.log(
+                    `Matrix transposed from ${dimension} to ${newDimension}. ` +
+                    `This may change compatibility with vectors. A ${oldRows}x${oldCols} matrix requires vectors with ${oldCols} components.`
+                  );
                 }}
                 className="w-full"
               >

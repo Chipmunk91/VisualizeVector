@@ -114,11 +114,18 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
         }
       }
       
+      // Log transposition for debugging
+      console.log(`Transposed matrix from ${state.matrix.dimension} to ${newDimension}`);
+      
       return {
         matrix: {
           values: transposedValues,
           dimension: newDimension,
-        }
+        },
+        // Since transposition changes compatibility with vectors,
+        // we temporarily turn off transformed vectors display
+        // to avoid showing incorrect transformations
+        showTransformed: false
       };
     });
   },
