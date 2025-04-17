@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { COLOR_PALETTE_BASIC, COLOR_PALETTE_EXTENDED, COLOR_PALETTE_PASTEL } from '../lib/colors';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 

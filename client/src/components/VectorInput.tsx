@@ -6,10 +6,11 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Trash, Eye, EyeOff } from "lucide-react";
 import VectorAnalysis from "./VectorAnalysis";
+import ColorPicker from "./ColorPicker";
 
 // Simple implementation to avoid re-render issues
 const VectorInput = () => {
-  const { vectors, addVector, removeVector, updateVector, updateVectorLabel, toggleVectorVisibility } = useVectorStore();
+  const { vectors, addVector, removeVector, updateVector, updateVectorLabel, updateVectorColor, toggleVectorVisibility } = useVectorStore();
   const [dimensions, setDimensions] = useState<"2d" | "3d">("3d");
   const [x, setX] = useState("0");
   const [y, setY] = useState("0");
@@ -234,9 +235,10 @@ const VectorInput = () => {
                 <li key={vector.id} className="border border-border rounded-md p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
-                      <div 
-                        className="w-4 h-4 rounded-full mr-2" 
-                        style={{ backgroundColor: vector.color }}
+                      <ColorPicker 
+                        currentColor={vector.color}
+                        onChange={(color) => updateVectorColor(vector.id, color)}
+                        className="mr-2"
                       />
                       <span className="font-medium">
                         {vector.components.length}D
