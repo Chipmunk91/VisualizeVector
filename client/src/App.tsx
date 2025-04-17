@@ -87,7 +87,7 @@ function App() {
     <div className="flex h-screen w-screen bg-background text-foreground">
       {/* Left Panel - Matrix Input */}
       <div 
-        className={`${showLeftPanel ? 'w-1/4 min-w-[250px]' : 'w-0'} transition-all duration-300 h-full bg-card border-r border-border overflow-y-auto overflow-x-hidden`}
+        className={`${showLeftPanel ? 'w-full sm:w-1/3 md:w-1/4 min-w-0 sm:min-w-[250px]' : 'w-0'} transition-all duration-300 h-full bg-card border-r border-border overflow-y-auto overflow-x-hidden`}
       >
         {showLeftPanel && (
           <Suspense fallback={<div className="p-4">Loading Matrix controls...</div>}>
@@ -99,16 +99,16 @@ function App() {
       {/* Center - 3D Visualization */}
       <div className="flex-1 flex flex-col h-full relative">
         {/* Top Controls */}
-        <div className="absolute top-2 right-2 z-10 flex space-x-2">
+        <div className="absolute top-2 right-2 z-10 flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => setShowLeftPanel(!showLeftPanel)}
-            className="bg-primary text-primary-foreground p-2 rounded-md text-sm"
+            className="bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs sm:text-sm"
           >
             {showLeftPanel ? '← Hide Matrix' : 'Show Matrix →'}
           </button>
           <button
             onClick={() => setShowRightPanel(!showRightPanel)}
-            className="bg-primary text-primary-foreground p-2 rounded-md text-sm"
+            className="bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs sm:text-sm"
           >
             {showRightPanel ? 'Hide Vectors →' : '← Show Vectors'}
           </button>

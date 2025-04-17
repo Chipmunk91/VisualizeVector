@@ -29,7 +29,7 @@ const MatrixAnalysis = () => {
         <CardTitle className="text-lg">Matrix Analysis</CardTitle>
       </CardHeader>
       <CardContent className="overflow-y-auto">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div className="bg-muted p-3 rounded-md">
             <p className="font-medium">Dimension:</p>
             <p>{rows}×{cols}</p>
@@ -59,16 +59,16 @@ const MatrixAnalysis = () => {
           )}
           
           {singularValues && singularValues.length > 0 && (
-            <div className="bg-muted p-3 rounded-md col-span-2">
+            <div className="bg-muted p-3 rounded-md sm:col-span-2">
               <p className="font-medium">Singular Values:</p>
-              <p>[{singularValues.map(v => v.toFixed(4)).join(", ")}]</p>
+              <p className="break-all">[{singularValues.map(v => v.toFixed(4)).join(", ")}]</p>
             </div>
           )}
           
           {eigenvalues && eigenvalues.length > 0 && (
-            <div className="bg-muted p-3 rounded-md col-span-2">
+            <div className="bg-muted p-3 rounded-md sm:col-span-2">
               <p className="font-medium">Eigenvalues:</p>
-              <p>[{eigenvalues.map(v => v.toFixed(4)).join(", ")}]</p>
+              <p className="break-all">[{eigenvalues.map(v => v.toFixed(4)).join(", ")}]</p>
             </div>
           )}
         </div>
@@ -76,14 +76,14 @@ const MatrixAnalysis = () => {
         {/* Matrix Visualization */}
         <div className="mt-4">
           <h3 className="font-medium mb-2">Matrix Visualization</h3>
-          <div className="bg-muted p-3 rounded-md flex justify-center">
+          <div className="bg-muted p-3 rounded-md flex justify-center overflow-x-auto">
             <div className="inline-block border-2 border-border rounded-md">
               {matrix.values.map((row, rowIdx) => (
                 <div key={rowIdx} className="flex">
                   {row.map((val, colIdx) => (
                     <div 
                       key={`${rowIdx}-${colIdx}`} 
-                      className="p-2 text-center min-w-[60px]"
+                      className="p-2 text-center min-w-[50px] w-[50px]"
                       style={{
                         // Highlight diagonal elements
                         backgroundColor: rowIdx === colIdx ? 'rgba(99, 102, 241, 0.1)' : 'transparent',

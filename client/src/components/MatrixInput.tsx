@@ -82,9 +82,9 @@ const MatrixInput = () => {
         <CardContent className="overflow-y-auto">
           <div className="grid gap-4 mb-4">
             {Array.from({ length: rows }).map((_, rowIndex) => (
-              <div key={rowIndex} className={`grid grid-cols-${cols} gap-2`}>
+              <div key={rowIndex} className="flex flex-wrap gap-2">
                 {Array.from({ length: cols }).map((_, colIndex) => (
-                  <div key={`${rowIndex}-${colIndex}`} className="min-w-[80px]">
+                  <div key={`${rowIndex}-${colIndex}`} className="w-[80px] flex-grow-0 flex-shrink-0">
                     <Label htmlFor={`m-${rowIndex}-${colIndex}`} className="whitespace-nowrap">
                       M<sub>{rowIndex+1},{colIndex+1}</sub>
                     </Label>
@@ -95,6 +95,7 @@ const MatrixInput = () => {
                       pattern="[0-9]*[.]?[0-9]*"
                       min="-100" 
                       max="100"
+                      className="min-w-0"
                       value={matrix.values[rowIndex][colIndex]}
                       onChange={(e) => {
                         // Handle leading zeros properly (keep for decimals like 0.5)

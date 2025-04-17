@@ -76,7 +76,7 @@ const VectorAnalysis = () => {
                   <h3 className="font-medium">{vector.label}</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid sm:grid-cols-2 gap-2 text-sm">
                   <div className="bg-muted p-2 rounded-md">
                     <p className="font-medium">Magnitude:</p>
                     <p>{magnitude.toFixed(4)}</p>
@@ -84,14 +84,14 @@ const VectorAnalysis = () => {
                   
                   <div className="bg-muted p-2 rounded-md">
                     <p className="font-medium">Components:</p>
-                    <p>[{vector.components.map(c => c.toFixed(2)).join(", ")}]</p>
+                    <p className="break-all">[{vector.components.map(c => c.toFixed(2)).join(", ")}]</p>
                   </div>
                   
                   {transformedVector && (
                     <>
                       <div className="bg-muted p-2 rounded-md">
                         <p className="font-medium">Transformed:</p>
-                        <p>[{transformedVector.components.map(c => c.toFixed(2)).join(", ")}]</p>
+                        <p className="break-all">[{transformedVector.components.map(c => c.toFixed(2)).join(", ")}]</p>
                       </div>
                       
                       <div className="bg-muted p-2 rounded-md">
@@ -99,7 +99,7 @@ const VectorAnalysis = () => {
                         <p>{calculateMagnitude(transformedVector.components).toFixed(4)}</p>
                       </div>
                       
-                      <div className="bg-muted p-2 rounded-md col-span-2">
+                      <div className="bg-muted p-2 rounded-md sm:col-span-2">
                         <p className="font-medium">Distance from Original:</p>
                         <p>
                           {vectorDistance(vector.components, transformedVector.components)?.toFixed(4) || "N/A"}
@@ -129,7 +129,7 @@ const VectorAnalysis = () => {
                   
                   return (
                     <div key={`${v1.id}-${v2.id}`} className="border border-border rounded-md p-3">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex flex-wrap justify-between items-center mb-2 gap-2">
                         <div className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
@@ -137,7 +137,7 @@ const VectorAnalysis = () => {
                           />
                           <span>{v1.label}</span>
                         </div>
-                        <span>and</span>
+                        <span className="text-sm">and</span>
                         <div className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
@@ -147,7 +147,7 @@ const VectorAnalysis = () => {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="grid sm:grid-cols-2 gap-2 text-sm">
                         <div className="bg-muted p-2 rounded-md">
                           <p className="font-medium">Dot Product:</p>
                           <p>{dot?.toFixed(4) || "N/A"}</p>
@@ -166,7 +166,7 @@ const VectorAnalysis = () => {
                         {cross && (
                           <div className="bg-muted p-2 rounded-md">
                             <p className="font-medium">Cross Product:</p>
-                            <p>[{cross.map(c => c.toFixed(2)).join(", ")}]</p>
+                            <p className="break-all">[{cross.map(c => c.toFixed(2)).join(", ")}]</p>
                           </div>
                         )}
                       </div>
