@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useVectorStore } from "../lib/stores/useVectorStore";
+import { evaluateExpression } from "../lib/mathParser";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -18,23 +19,28 @@ const VectorInput = () => {
 
   // Add a new vector - simplified
   const handleAddVector = () => {
-    // Safely parse inputs with default values, empty values treated as 0
-    const xVal = x === '' ? 0 : (parseFloat(x) || 0);
-    const yVal = y === '' ? 0 : (parseFloat(y) || 0);
-    const zVal = z === '' ? 0 : (parseFloat(z) || 0);
-    
-    // Create appropriate components array
-    const components = dimensions === "2d" 
-      ? [xVal, yVal]
-      : [xVal, yVal, zVal];
-    
-    // Add the vector
-    addVector(components);
-    
-    // Reset input fields
-    setX("0");
-    setY("0");
-    setZ("0");
+    try {
+      // Safely parse inputs with default values, empty values treated as 0
+      // Also support mathematical expressions like 1/7 or 2^(1/3)
+      const xVal = x === '' ? 0 : evaluateExpression(x);
+      const yVal = y === '' ? 0 : evaluateExpression(y);
+      const zVal = z === '' ? 0 : evaluateExpression(z);
+      
+      // Create appropriate components array
+      const components = dimensions === "2d" 
+        ? [xVal, yVal]
+        : [xVal, yVal, zVal];
+      
+      // Add the vector
+      addVector(components);
+      
+      // Reset input fields
+      setX("0");
+      setY("0");
+      setZ("0");
+    } catch (error) {
+      console.log("Error evaluating vector expressions:", error);
+    }
   };
 
   // Filter out transformed vectors for the list
@@ -72,7 +78,7 @@ const VectorInput = () => {
                   <Label htmlFor="x-2d">X</Label>
                   <Input 
                     id="x-2d" 
-                    type="number" 
+                    type="text" 
                     value={x} 
                     onChange={(e) => {
                       // Handle leading zeros properly (keep for decimals like 0.5)
@@ -292,21 +298,36 @@ const VectorInput = () => {
                       <div key={index}>
                         <Label>{index === 0 ? 'X' : index === 1 ? 'Y' : 'Z'}</Label>
                         <Input
-                          type="number"
+                          type="text"
                           value={value}
                           onChange={(e) => {
-                            // Handle leading zeros properly (keep for decimals like 0.5)
+                            // Get the input value
                             let value = e.target.value;
-                            if (value.match(/^0[0-9]/) && !value.includes('.')) {
-                              value = value.replace(/^0+/, '');
-                              // Update the input value
-                              e.target.value = value;
-                            }
                             
+                            // Create a copy of the components array
                             const newComponents = [...vector.components];
-                            // Treat empty values as 0
-                            newComponents[index] = value === '' ? 0 : (parseFloat(value) || 0);
-                            updateVector(vector.id, newComponents);
+                            
+                            try {
+                              // If input is empty, use 0
+                              if (value === '') {
+                                newComponents[index] = 0;
+                              } else {
+                                // Otherwise, evaluate the mathematical expression
+                                newComponents[index] = evaluateExpression(value);
+                              }
+                              
+                              // Update the vector with the new components
+                              updateVector(vector.id, newComponents);
+                            } catch (error) {
+                              console.log(`Error evaluating expression "${value}":`, error);
+                              
+                              // Fallback to basic number parsing
+                              const numValue = parseFloat(value);
+                              if (!isNaN(numValue)) {
+                                newComponents[index] = numValue;
+                                updateVector(vector.id, newComponents);
+                              }
+                            }
                           }}
                           onDoubleClick={(e) => {
                             // Select all text on double click for easier editing

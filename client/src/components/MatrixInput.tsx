@@ -1,6 +1,7 @@
 import { useMatrixStore, MatrixDimension } from "../lib/stores/useMatrixStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
 import { applyMatrixTransformation } from "../lib/math";
+import { evaluateExpression } from "../lib/mathParser";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
@@ -19,10 +20,18 @@ const MatrixInput = () => {
       return;
     }
     
-    // Otherwise parse as normal
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      updateMatrixValue(row, col, numValue);
+    try {
+      // Evaluate mathematical expressions like "1/7" or "2^(1/3)"
+      const result = evaluateExpression(value);
+      updateMatrixValue(row, col, result);
+    } catch (error) {
+      console.log(`Error parsing expression "${value}":`, error);
+      
+      // Fallback to simple parsing for basic values
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue)) {
+        updateMatrixValue(row, col, numValue);
+      }
     }
   };
 
@@ -179,13 +188,9 @@ const MatrixInput = () => {
                     </Label>
                     <Input
                       id={`m-${rowIndex}-${colIndex}`}
-                      type="number"
-                      step="any"
-                      pattern="[0-9]*[.]?[0-9]*"
-                      min="-100" 
-                      max="100"
+                      type="text"
                       className="min-w-0"
-                      value={matrix.values[rowIndex][colIndex]}
+                      value={matrix.values[rowIndex][colIndex].toString()}
                       onChange={(e) => {
                         // Handle leading zeros properly (keep for decimals like 0.5)
                         let value = e.target.value;
