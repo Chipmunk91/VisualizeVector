@@ -2,12 +2,13 @@ import { useMatrixStore, MatrixDimension } from "../lib/stores/useMatrixStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import MatrixAnalysis from "./MatrixAnalysis";
 
 // Extremely simplified component - no side effects
 const MatrixInput = () => {
-  const { matrix, updateMatrixValue, setDimension, showTransformed, toggleShowTransformed } = useMatrixStore();
+  const { matrix, updateMatrixValue, setDimension, showTransformed, toggleShowTransformed, transposeMatrix } = useMatrixStore();
 
   // These handlers don't have any side effects beyond the store update
   const handleMatrixChange = (row: number, col: number, value: string) => {
@@ -71,6 +72,19 @@ const MatrixInput = () => {
               />
               <Label htmlFor="show-transformed">Show Transformed Vectors</Label>
             </div>
+            
+            <div>
+              <Button 
+                onClick={() => {
+                  transposeMatrix();
+                  // Clear transformed vectors as dimensions may have changed
+                  clearTransformedVectors();
+                }}
+                className="w-full"
+              >
+                Transpose Matrix
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -82,10 +96,10 @@ const MatrixInput = () => {
         <CardContent className="overflow-y-auto">
           <div className="grid gap-4 mb-4">
             {Array.from({ length: rows }).map((_, rowIndex) => (
-              <div key={rowIndex} className="flex flex-wrap gap-2">
+              <div key={rowIndex} className="flex flex-wrap justify-center gap-2">
                 {Array.from({ length: cols }).map((_, colIndex) => (
                   <div key={`${rowIndex}-${colIndex}`} className="w-[80px] flex-grow-0 flex-shrink-0">
-                    <Label htmlFor={`m-${rowIndex}-${colIndex}`} className="whitespace-nowrap">
+                    <Label htmlFor={`m-${rowIndex}-${colIndex}`} className="whitespace-nowrap text-center block">
                       M<sub>{rowIndex+1},{colIndex+1}</sub>
                     </Label>
                     <Input

@@ -14,6 +14,7 @@ interface MatrixStore {
   updateMatrixValue: (row: number, col: number, value: number) => void;
   setDimension: (dimension: MatrixDimension) => void;
   toggleShowTransformed: () => void;
+  transposeMatrix: () => void;
 }
 
 const createEmptyMatrix = (dimension: MatrixDimension): number[][] => {
@@ -84,5 +85,31 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
     set((state) => ({
       showTransformed: !state.showTransformed,
     }));
+  },
+  
+  transposeMatrix: () => {
+    set((state) => {
+      const [rows, cols] = state.matrix.dimension.split('x').map(Number);
+      
+      // Create a new matrix with transposed dimensions
+      const newDimension = `${cols}x${rows}` as MatrixDimension;
+      
+      // Create the transposed matrix
+      const transposedValues = Array(cols).fill(0).map(() => Array(rows).fill(0));
+      
+      // Fill with transposed values
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          transposedValues[j][i] = state.matrix.values[i][j];
+        }
+      }
+      
+      return {
+        matrix: {
+          values: transposedValues,
+          dimension: newDimension,
+        }
+      };
+    });
   },
 }));
