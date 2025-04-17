@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useEffect } from "react";
+import React, { useState, Suspense, useCallback, useRef, useLayoutEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import "@fontsource/inter";
 import Controls from "./components/Controls";
@@ -17,63 +17,67 @@ function App() {
   // Get store data
   const { matrix, showTransformed } = useMatrixStore();
   const { vectors, setTransformedVectors, clearTransformedVectors } = useVectorStore();
+
+  // Using refs to prevent causing infinite update loops
+  const matrixRef = useRef(matrix);
+  const vectorsRef = useRef(vectors);
+  const showTransformedRef = useRef(showTransformed);
   
-  // Track the previous state to avoid unnecessary updates
-  const [prevMatrix, setPrevMatrix] = useState("");
-  const [prevVectors, setPrevVectors] = useState("");
+  // Update refs when props change
+  useLayoutEffect(() => {
+    matrixRef.current = matrix;
+    vectorsRef.current = vectors;
+    showTransformedRef.current = showTransformed;
+  }, [matrix, vectors, showTransformed]);
   
-  // Process matrix transformations (separate from render cycle to avoid infinite loops)
-  useEffect(() => {
-    // Skip if transformations are disabled
-    if (!showTransformed) {
+  // Memoized calculation function
+  const calculateTransformations = useCallback(() => {
+    // Get refs safely to avoid closures with stale values
+    const currentMatrix = matrixRef.current;
+    const currentVectors = vectorsRef.current;
+    const shouldShowTransformed = showTransformedRef.current;
+    
+    if (!shouldShowTransformed) {
       clearTransformedVectors();
       return;
     }
-    
-    // Extract only the original vectors (non-transformed)
-    const originalVectors = vectors.filter(v => !v.isTransformed);
-    
-    // Skip if no original vectors
+
+    const originalVectors = currentVectors.filter(v => !v.isTransformed);
     if (originalVectors.length === 0) {
       return;
     }
     
-    // Create serialized representations for comparison
-    const matrixString = JSON.stringify(matrix);
-    const vectorString = JSON.stringify(
-      originalVectors.map(v => ({ id: v.id, components: v.components, visible: v.visible }))
-    );
-    
-    // Only process if something has changed
-    if (matrixString === prevMatrix && vectorString === prevVectors) {
-      return;
-    }
-    
-    // Update previous state references
-    setPrevMatrix(matrixString);
-    setPrevVectors(vectorString);
-    
-    // Calculate transformed vectors
     try {
-      const transformedVectors = originalVectors
-        .map(vector => applyMatrixTransformation(matrix, vector))
-        .filter(Boolean); // Remove null results
+      const transformed = originalVectors
+        .map(vector => applyMatrixTransformation(currentMatrix, vector))
+        .filter((v): v is NonNullable<typeof v> => v !== null);
         
-      if (transformedVectors.length > 0) {
-        setTransformedVectors([], transformedVectors);
+      if (transformed.length > 0) {
+        setTransformedVectors([], transformed);
       }
     } catch (error) {
-      console.error("Error applying transformations:", error);
+      console.error("Error calculating transformations:", error);
     }
-  }, [
-    matrix, 
-    vectors, 
-    showTransformed, 
-    setTransformedVectors, 
-    clearTransformedVectors,
-    prevMatrix,
-    prevVectors
-  ]);
+  }, [clearTransformedVectors, setTransformedVectors]);
+  
+  // Run the calculation only when the show/hide toggle changes
+  useLayoutEffect(() => {
+    calculateTransformations();
+  }, [showTransformed, calculateTransformations]);
+  
+  // Also run calculation when matrix changes
+  useLayoutEffect(() => {
+    if (showTransformed) {
+      calculateTransformations();
+    }
+  }, [matrix, calculateTransformations, showTransformed]);
+  
+  // Run calculation when vectors change (add/remove/update)
+  useLayoutEffect(() => {
+    if (showTransformed) {
+      calculateTransformations();
+    }
+  }, [vectors, calculateTransformations, showTransformed]);
 
   return (
     <div className="flex h-screen w-screen bg-background text-foreground">
