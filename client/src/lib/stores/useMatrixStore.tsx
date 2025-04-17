@@ -78,8 +78,21 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
   },
   
   toggleShowTransformed: () => {
-    set((state) => ({
-      showTransformed: !state.showTransformed,
-    }));
+    set((state) => {
+      // Force recalculation by triggering a state change in two steps
+      const newState = {
+        showTransformed: !state.showTransformed,
+      };
+      
+      // When toggling to show transformed vectors, we also set a flag
+      // to indicate that a recalculation should happen
+      if (!state.showTransformed) {
+        // We're turning it ON
+        // Clear any hash to force recalculation
+        document.body.removeAttribute('data-last-transform-hash');
+      }
+      
+      return newState;
+    });
   },
 }));

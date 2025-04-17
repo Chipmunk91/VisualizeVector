@@ -42,6 +42,12 @@ function App() {
       return;
     }
     
+    // Force recalculation when toggling showTransformed back on
+    // Reset the stored hash to trigger recalculation
+    if (showTransformed) {
+      document.body.removeAttribute('data-last-transform-hash');
+    }
+    
     // Get only original vectors
     const originalVectors = vectors.filter(v => !v.isTransformed);
     if (originalVectors.length === 0) {
