@@ -84,22 +84,37 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   toggleVectorVisibility: (id) => {
     set((state) => {
-      // Find the target vector to get its current visibility state
+      // Find the target vector
       const targetVector = state.vectors.find(v => v.id === id);
       if (!targetVector) return { vectors: state.vectors };
       
+      // Get the new visibility state (toggled)
       const newVisibility = !targetVector.visible;
       
+      // Return updated vectors array
       return {
         vectors: state.vectors.map((v) => {
-          // Update the original vector
+          // Handle original vector
           if (v.id === id) {
             return { ...v, visible: newVisibility };
           }
-          // Also update any transformed version of this vector
-          if (v.originalId === id) {
+          
+          // Handle transformed vectors (if we're toggling an original vector)
+          if (!targetVector.isTransformed && v.originalId === id) {
             return { ...v, visible: newVisibility };
           }
+          
+          // Handle original vectors (if we're toggling a transformed vector)
+          if (targetVector.isTransformed && targetVector.originalId === v.id) {
+            return { ...v, visible: newVisibility };
+          }
+          
+          // Handle other transformed vectors of the same original (if toggling a transformed vector)
+          if (targetVector.isTransformed && v.isTransformed && v.originalId === targetVector.originalId) {
+            return { ...v, visible: newVisibility };
+          }
+          
+          // Don't change other vectors
           return v;
         })
       };
@@ -108,12 +123,25 @@ export const useVectorStore = create<VectorStore>((set) => ({
   
   setTransformedVectors: (originalVectors, transformedVectors) => {
     set((state) => {
-      // Filter out any existing transformed vectors
-      const filteredVectors = state.vectors.filter(v => !v.isTransformed);
+      // Keep only non-transformed vectors
+      const originalState = state.vectors.filter(v => !v.isTransformed);
       
-      // Add the new transformed vectors
+      // Sync visibility between original and transformed vectors
+      const syncedTransformed = transformedVectors.map(transformed => {
+        // Find the corresponding original vector
+        const original = originalState.find(v => v.id === transformed.originalId);
+        
+        // If found, ensure transformed vector has same visibility as original
+        if (original) {
+          return { ...transformed, visible: original.visible };
+        }
+        
+        return transformed;
+      });
+      
+      // Return updated state
       return {
-        vectors: [...filteredVectors, ...transformedVectors]
+        vectors: [...originalState, ...syncedTransformed]
       };
     });
   },

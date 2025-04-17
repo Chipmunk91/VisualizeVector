@@ -18,53 +18,62 @@ function App() {
   const { matrix, showTransformed } = useMatrixStore();
   const { vectors, setTransformedVectors, clearTransformedVectors } = useVectorStore();
   
-  // Use a ref to avoid infinite loops
-  const prevVectorsRef = React.useRef<string>("");
-  const prevMatrixRef = React.useRef<string>("");
+  // Track the previous state to avoid unnecessary updates
+  const [prevMatrix, setPrevMatrix] = useState("");
+  const [prevVectors, setPrevVectors] = useState("");
   
-  // This effect applies the matrix transformations when needed
+  // Process matrix transformations (separate from render cycle to avoid infinite loops)
   useEffect(() => {
-    // Only extract original vectors for comparison and transformation
+    // Skip if transformations are disabled
+    if (!showTransformed) {
+      clearTransformedVectors();
+      return;
+    }
+    
+    // Extract only the original vectors (non-transformed)
     const originalVectors = vectors.filter(v => !v.isTransformed);
     
-    // Create string representations for comparison to prevent unnecessary updates
-    const vectorsString = JSON.stringify(originalVectors);
-    const matrixString = JSON.stringify(matrix);
-    
-    // Only process if something changed or show/hide toggle changed
-    if (
-      showTransformed && 
-      originalVectors.length > 0 && 
-      (vectorsString !== prevVectorsRef.current || 
-       matrixString !== prevMatrixRef.current)
-    ) {
-      // Update refs to current values
-      prevVectorsRef.current = vectorsString;
-      prevMatrixRef.current = matrixString;
-      
-      console.log("Applying matrix transformations to vectors");
-      
-      // Apply transformations
-      const transformedVectors = [];
-      
-      for (const vector of originalVectors) {
-        const transformed = applyMatrixTransformation(matrix, vector);
-        if (transformed) {
-          // Keep visibility consistent with the original vector
-          transformed.visible = vector.visible;
-          transformedVectors.push(transformed);
-        }
-      }
-      
-      if (transformedVectors.length > 0) {
-        console.log("Setting transformed vectors");
-        setTransformedVectors(originalVectors, transformedVectors);
-      }
-    } else if (!showTransformed) {
-      // Clear transformed vectors if show transform is disabled
-      clearTransformedVectors();
+    // Skip if no original vectors
+    if (originalVectors.length === 0) {
+      return;
     }
-  }, [matrix, vectors, showTransformed, setTransformedVectors, clearTransformedVectors]);
+    
+    // Create serialized representations for comparison
+    const matrixString = JSON.stringify(matrix);
+    const vectorString = JSON.stringify(
+      originalVectors.map(v => ({ id: v.id, components: v.components, visible: v.visible }))
+    );
+    
+    // Only process if something has changed
+    if (matrixString === prevMatrix && vectorString === prevVectors) {
+      return;
+    }
+    
+    // Update previous state references
+    setPrevMatrix(matrixString);
+    setPrevVectors(vectorString);
+    
+    // Calculate transformed vectors
+    try {
+      const transformedVectors = originalVectors
+        .map(vector => applyMatrixTransformation(matrix, vector))
+        .filter(Boolean); // Remove null results
+        
+      if (transformedVectors.length > 0) {
+        setTransformedVectors([], transformedVectors);
+      }
+    } catch (error) {
+      console.error("Error applying transformations:", error);
+    }
+  }, [
+    matrix, 
+    vectors, 
+    showTransformed, 
+    setTransformedVectors, 
+    clearTransformedVectors,
+    prevMatrix,
+    prevVectors
+  ]);
 
   return (
     <div className="flex h-screen w-screen bg-background text-foreground">

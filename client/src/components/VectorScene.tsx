@@ -82,11 +82,13 @@ const VectorScene = () => {
       ))}
       
       {/* Render user-added vectors */}
-      {vectors.filter(v => v.visible).map((vector) => (
-        <Vector 
-          key={vector.id} 
-          vector={vector} 
-        />
+      {vectors.map((vector) => (
+        vector.visible && (
+          <Vector 
+            key={vector.id} 
+            vector={vector} 
+          />
+        )
       ))}
     </>
   );
