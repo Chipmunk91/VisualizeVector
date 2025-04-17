@@ -106,7 +106,7 @@ const hsvToRgb = (h: number, s: number, v: number): { r: number; g: number; b: n
 const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [colorMode, setColorMode] = useState<'rgb' | 'hsv'>('hsv'); // Default to HSV as it works better
+  const [colorMode, setColorMode] = useState<'rgb' | 'hsv'>('rgb'); // Default to RGB mode
   
   // RGB values for advanced picker
   const [red, setRed] = useState(0);
@@ -449,7 +449,7 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
       
       {/* Advanced Color Picker Dialog */}
       <Dialog open={showAdvanced} onOpenChange={setShowAdvanced}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[540px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Advanced Color Picker</DialogTitle>
             <DialogDescription>
@@ -477,14 +477,14 @@ const ColorPicker = ({ currentColor, onChange, className = '' }: ColorPickerProp
                 <canvas 
                   ref={colorGradientRef} 
                   width={200} 
-                  height={200} 
+                  height={150} 
                   onClick={handleGradientClick}
                   className="cursor-crosshair border border-gray-300 rounded-md"
                 />
                 <canvas 
                   ref={grayscaleRef} 
                   width={30} 
-                  height={200} 
+                  height={150} 
                   onClick={handleGrayscaleClick}
                   className="cursor-pointer border border-gray-300 rounded-md"
                 />
