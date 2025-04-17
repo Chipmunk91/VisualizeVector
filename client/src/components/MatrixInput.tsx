@@ -87,12 +87,20 @@ const MatrixInput = () => {
                       max="100"
                       value={matrix.values[rowIndex][colIndex]}
                       onChange={(e) => {
-                        // Replace any leading zeros (except for decimal values like 0.5)
+                        // Handle leading zeros properly (keep for decimals like 0.5)
                         let value = e.target.value;
-                        if (value.match(/^0[0-9]/)) {
+                        if (value.match(/^0[0-9]/) && !value.includes('.')) {
                           value = value.replace(/^0+/, '');
                         }
                         handleMatrixChange(rowIndex, colIndex, value);
+                      }}
+                      onClick={(e) => {
+                        // Select all on click
+                        (e.target as HTMLInputElement).select();
+                      }}
+                      onDoubleClick={(e) => {
+                        // Also select on double click to be safe
+                        (e.target as HTMLInputElement).select();
                       }}
                     />
                   </div>
