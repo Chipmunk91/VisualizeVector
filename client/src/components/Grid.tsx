@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { useEffect } from "react";
 
 interface GridProps {
   size?: number;
@@ -6,7 +7,12 @@ interface GridProps {
   color?: string;
 }
 
-const Grid = ({ size = 10, divisions = 10, color = "#444444" }: GridProps) => {
+const Grid = ({ size = 10, divisions = 10, color = "#666666" }: GridProps) => {
+  // Debug logging
+  useEffect(() => {
+    console.log("Rendering Grid component, size:", size, "divisions:", divisions);
+  }, [size, divisions]);
+
   return (
     <>
       {/* XY Grid (horizontal) */}
@@ -29,6 +35,20 @@ const Grid = ({ size = 10, divisions = 10, color = "#444444" }: GridProps) => {
         position={[0, 0, 0]}
         rotation={[0, 0, Math.PI / 2]}
       />
+      
+      {/* Extra visual grid for debugging */}
+      <mesh 
+        position={[0, -0.01, 0]} 
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <planeGeometry args={[size, size]} />
+        <meshStandardMaterial 
+          color="#222222" 
+          transparent={true} 
+          opacity={0.5}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
     </>
   );
 };

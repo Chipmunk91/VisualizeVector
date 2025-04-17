@@ -95,17 +95,31 @@ function App() {
         </div>
 
         {/* Canvas Container */}
-        <div className="flex-1">
+        <div className="flex-1 border-2 border-blue-500">
           <Canvas
-            camera={{ position: [5, 5, 5], fov: 45 }}
+            camera={{ position: [8, 8, 8], fov: 60 }}
             gl={{ antialias: true }}
+            shadows
+            style={{ background: "#111" }}
           >
-            <color attach="background" args={["#111111"]} />
+            {/* Ambient and directional lighting */}
+            <ambientLight intensity={0.6} />
+            <directionalLight 
+              position={[10, 10, 5]} 
+              intensity={0.8} 
+              castShadow 
+              shadow-mapSize={[1024, 1024]}
+            />
             
+            {/* Scene contents */}
             <Suspense fallback={null}>
               <VectorScene />
             </Suspense>
             
+            {/* Debug info */}
+            <axesHelper args={[5]} />
+            
+            {/* Camera controls */}
             <Controls />
           </Canvas>
         </div>
