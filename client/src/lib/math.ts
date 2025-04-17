@@ -40,7 +40,7 @@ export function applyMatrixTransformation(
       id: `transformed-${vector.id}`,
       components: resultArray,
       color: vector.color,
-      label: vector.label,
+      label: `${vector.label} - T`,
       visible: true,
       isTransformed: true,
       originalId: vector.id,

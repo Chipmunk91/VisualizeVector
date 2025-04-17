@@ -8,7 +8,7 @@ import { Trash, Eye, EyeOff } from "lucide-react";
 
 // Simple implementation to avoid re-render issues
 const VectorInput = () => {
-  const { vectors, addVector, removeVector, updateVector, toggleVectorVisibility } = useVectorStore();
+  const { vectors, addVector, removeVector, updateVector, updateVectorLabel, toggleVectorVisibility } = useVectorStore();
   const [dimensions, setDimensions] = useState<"2d" | "3d">("3d");
   const [x, setX] = useState("0");
   const [y, setY] = useState("0");

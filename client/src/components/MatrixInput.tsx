@@ -81,8 +81,19 @@ const MatrixInput = () => {
                     <Input
                       id={`m-${rowIndex}-${colIndex}`}
                       type="number"
+                      step="any"
+                      pattern="[0-9]*[.]?[0-9]*"
+                      min="-100" 
+                      max="100"
                       value={matrix.values[rowIndex][colIndex]}
-                      onChange={(e) => handleMatrixChange(rowIndex, colIndex, e.target.value)}
+                      onChange={(e) => {
+                        // Replace any leading zeros (except for decimal values like 0.5)
+                        let value = e.target.value;
+                        if (value.match(/^0[0-9]/)) {
+                          value = value.replace(/^0+/, '');
+                        }
+                        handleMatrixChange(rowIndex, colIndex, value);
+                      }}
                     />
                   </div>
                 ))}

@@ -19,6 +19,7 @@ interface VectorStore {
   addVector: (components: number[]) => void;
   removeVector: (id: string) => void;
   updateVector: (id: string, components: number[]) => void;
+  updateVectorLabel: (id: string, label: string) => void;
   toggleVectorVisibility: (id: string) => void;
   setTransformedVectors: (originalVectors: Vector[], transformedVectors: Vector[]) => void;
   clearTransformedVectors: () => void;
@@ -33,7 +34,7 @@ export const useVectorStore = create<VectorStore>((set) => ({
       id,
       components,
       color: getRandomColor(),
-      label: `v${components.length}`,
+      label: `Vector${components.length}`,
       visible: true,
       isTransformed: false,
     };
@@ -64,15 +65,45 @@ export const useVectorStore = create<VectorStore>((set) => ({
     }));
   },
   
-  toggleVectorVisibility: (id) => {
-    set((state) => ({
-      vectors: state.vectors.map((v) => {
+  updateVectorLabel: (id, label) => {
+    set((state) => {
+      const updatedVectors = state.vectors.map((v) => {
+        // Update original vector label
         if (v.id === id) {
-          return { ...v, visible: !v.visible };
+          return { ...v, label };
+        }
+        // Update transformed vector label - append "- T" suffix
+        if (v.originalId === id) {
+          return { ...v, label: `${label} - T` };
         }
         return v;
-      })
-    }));
+      });
+      return { vectors: updatedVectors };
+    });
+  },
+  
+  toggleVectorVisibility: (id) => {
+    set((state) => {
+      // Find the target vector to get its current visibility state
+      const targetVector = state.vectors.find(v => v.id === id);
+      if (!targetVector) return { vectors: state.vectors };
+      
+      const newVisibility = !targetVector.visible;
+      
+      return {
+        vectors: state.vectors.map((v) => {
+          // Update the original vector
+          if (v.id === id) {
+            return { ...v, visible: newVisibility };
+          }
+          // Also update any transformed version of this vector
+          if (v.originalId === id) {
+            return { ...v, visible: newVisibility };
+          }
+          return v;
+        })
+      };
+    });
   },
   
   setTransformedVectors: (originalVectors, transformedVectors) => {
