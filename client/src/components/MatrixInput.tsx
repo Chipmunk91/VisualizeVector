@@ -76,9 +76,19 @@ const MatrixInput = () => {
             <div>
               <Button 
                 onClick={() => {
+                  // First transpose the matrix
                   transposeMatrix();
-                  // Clear transformed vectors as dimensions may have changed
-                  clearTransformedVectors();
+                  
+                  // Force recalculating transformed vectors instead of clearing
+                  // This will take advantage of our new compatibility logic
+                  const showTransformed = useMatrixStore.getState().showTransformed;
+                  if (showTransformed) {
+                    // Toggle off and back on to force recalculation
+                    useMatrixStore.setState({ showTransformed: false });
+                    setTimeout(() => {
+                      useMatrixStore.setState({ showTransformed: true });
+                    }, 10);
+                  }
                 }}
                 className="w-full"
               >
