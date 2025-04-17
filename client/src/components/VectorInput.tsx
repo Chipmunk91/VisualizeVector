@@ -18,10 +18,10 @@ const VectorInput = () => {
 
   // Add a new vector - simplified
   const handleAddVector = () => {
-    // Safely parse inputs with default values
-    const xVal = parseFloat(x) || 0;
-    const yVal = parseFloat(y) || 0;
-    const zVal = parseFloat(z) || 0;
+    // Safely parse inputs with default values, empty values treated as 0
+    const xVal = x === '' ? 0 : (parseFloat(x) || 0);
+    const yVal = y === '' ? 0 : (parseFloat(y) || 0);
+    const zVal = z === '' ? 0 : (parseFloat(z) || 0);
     
     // Create appropriate components array
     const components = dimensions === "2d" 
@@ -304,7 +304,8 @@ const VectorInput = () => {
                             }
                             
                             const newComponents = [...vector.components];
-                            newComponents[index] = parseFloat(value) || 0;
+                            // Treat empty values as 0
+                            newComponents[index] = value === '' ? 0 : (parseFloat(value) || 0);
                             updateVector(vector.id, newComponents);
                           }}
                           onDoubleClick={(e) => {

@@ -13,6 +13,13 @@ const MatrixInput = () => {
 
   // These handlers don't have any side effects beyond the store update
   const handleMatrixChange = (row: number, col: number, value: string) => {
+    // If the value is empty string, treat it as 0
+    if (value === '') {
+      updateMatrixValue(row, col, 0);
+      return;
+    }
+    
+    // Otherwise parse as normal
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
       updateMatrixValue(row, col, numValue);
