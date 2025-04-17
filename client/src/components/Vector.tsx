@@ -228,9 +228,9 @@ const Vector = ({ vector }: VectorProps) => {
           anchorX="center"
           anchorY="bottom"
           fillOpacity={opacity}
-          outlineWidth={0.04}
-          outlineColor="#000000"
-          outlineOpacity={opacity * 0.5}
+          outlineWidth={0.05}
+          outlineColor="#222222"
+          outlineOpacity={opacity * 0.8}
           quaternion={camera.quaternion}
         >
           {vector.label}

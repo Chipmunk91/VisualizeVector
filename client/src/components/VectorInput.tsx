@@ -184,6 +184,14 @@ const VectorInput = () => {
                       value={vector.label}
                       onChange={(e) => updateVectorLabel(vector.id, e.target.value)}
                       placeholder="Enter vector name"
+                      onDoubleClick={(e) => {
+                        // Select all text on double click for easier editing
+                        (e.target as HTMLInputElement).select();
+                      }}
+                      onClick={(e) => {
+                        // Also select on single click for better usability
+                        (e.target as HTMLInputElement).select();
+                      }}
                     />
                   </div>
                   
@@ -199,6 +207,14 @@ const VectorInput = () => {
                             const newComponents = [...vector.components];
                             newComponents[index] = parseFloat(e.target.value) || 0;
                             updateVector(vector.id, newComponents);
+                          }}
+                          onDoubleClick={(e) => {
+                            // Select all text on double click for easier editing
+                            (e.target as HTMLInputElement).select();
+                          }}
+                          onClick={(e) => {
+                            // Also select on single click for better usability
+                            (e.target as HTMLInputElement).select();
                           }}
                           step="any"
                         />

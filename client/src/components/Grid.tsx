@@ -7,7 +7,7 @@ interface GridProps {
   color?: string;
 }
 
-const Grid = ({ size = 10, divisions = 10, color = "#666666" }: GridProps) => {
+const Grid = ({ size = 10, divisions = 10, color = "#444444" }: GridProps) => {
   // Debug logging
   useEffect(() => {
     console.log("Rendering Grid component, size:", size, "divisions:", divisions);
@@ -36,16 +36,16 @@ const Grid = ({ size = 10, divisions = 10, color = "#666666" }: GridProps) => {
         rotation={[0, 0, Math.PI / 2]}
       />
       
-      {/* Extra visual grid for debugging */}
+      {/* Light gray background plane */}
       <mesh 
         position={[0, -0.01, 0]} 
         rotation={[-Math.PI / 2, 0, 0]}
       >
         <planeGeometry args={[size, size]} />
         <meshStandardMaterial 
-          color="#222222" 
+          color="#f5f5f5" 
           transparent={true} 
-          opacity={0.5}
+          opacity={0.7}
           side={THREE.DoubleSide}
         />
       </mesh>

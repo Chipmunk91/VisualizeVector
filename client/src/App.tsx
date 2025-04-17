@@ -120,7 +120,7 @@ function App() {
             camera={{ position: [8, 8, 8], fov: 60 }}
             gl={{ antialias: true }}
             shadows
-            style={{ background: "#111" }}
+            style={{ background: "#ffffff" }}
           >
             {/* Ambient and directional lighting */}
             <ambientLight intensity={0.6} />
