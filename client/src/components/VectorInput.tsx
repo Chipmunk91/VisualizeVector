@@ -9,11 +9,12 @@ import VectorAnalysis from "./VectorAnalysis";
 
 // Simple implementation to avoid re-render issues
 const VectorInput = () => {
-  const { vectors, addVector, removeVector, updateVector, updateVectorLabel, toggleVectorVisibility } = useVectorStore();
+  const { vectors, addVector, removeVector, updateVector, updateVectorLabel, updateVectorColor, toggleVectorVisibility } = useVectorStore();
   const [dimensions, setDimensions] = useState<"2d" | "3d">("3d");
   const [x, setX] = useState("0");
   const [y, setY] = useState("0");
   const [z, setZ] = useState("0");
+  const [selectedColor, setSelectedColor] = useState("#999999");
 
   // Add a new vector - simplified
   const handleAddVector = () => {
@@ -27,8 +28,8 @@ const VectorInput = () => {
       ? [xVal, yVal]
       : [xVal, yVal, zVal];
     
-    // Add the vector
-    addVector(components);
+    // Add the vector with the selected color
+    addVector(components, selectedColor);
     
     // Reset input fields
     setX("0");
