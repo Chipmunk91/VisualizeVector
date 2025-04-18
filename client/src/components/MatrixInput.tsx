@@ -16,22 +16,20 @@ const MatrixInput = () => {
   const handleMatrixChange = (row: number, col: number, value: string) => {
     // If the value is empty string, treat it as 0
     if (value === '') {
-      updateMatrixValue(row, col, 0);
+      updateMatrixValue(row, col, 0, '0');
       return;
     }
     
     try {
       // Evaluate mathematical expressions like "1/7" or "2^(1/3)"
       const result = evaluateExpression(value);
-      updateMatrixValue(row, col, result);
+      // Store both the evaluated value and the original expression
+      updateMatrixValue(row, col, result, value);
     } catch (error) {
       console.log(`Error parsing expression "${value}":`, error);
       
-      // Fallback to simple parsing for basic values
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue)) {
-        updateMatrixValue(row, col, numValue);
-      }
+      // Don't update if there's an error in the expression
+      // This allows the user to continue typing a complex expression
     }
   };
 
@@ -190,9 +188,11 @@ const MatrixInput = () => {
                       id={`m-${rowIndex}-${colIndex}`}
                       type="text"
                       className="min-w-0"
-                      value={matrix.values[rowIndex][colIndex].toString()}
+                      // Display the original expression if available, otherwise the numeric value
+                      value={(matrix.expressions && matrix.expressions[rowIndex][colIndex]) || 
+                             matrix.values[rowIndex][colIndex].toString()}
                       onChange={(e) => {
-                        // Handle leading zeros properly (keep for decimals like 0.5)
+                        // Get the raw input value
                         let value = e.target.value;
                         handleMatrixChange(rowIndex, colIndex, value);
                       }}

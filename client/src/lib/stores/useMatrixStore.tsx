@@ -13,7 +13,7 @@ interface MatrixStore {
   matrix: Matrix;
   showTransformed: boolean;
   setMatrix: (matrix: Matrix) => void;
-  updateMatrixValue: (row: number, col: number, value: number) => void;
+  updateMatrixValue: (row: number, col: number, value: number, expression?: string) => void;
   setDimension: (dimension: MatrixDimension) => void;
   toggleShowTransformed: () => void;
   transposeMatrix: () => void;
@@ -43,10 +43,32 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
     set({ matrix });
   },
   
-  updateMatrixValue: (row, col, value) => {
+  updateMatrixValue: (row, col, value, expression) => {
     set((state) => {
+      // Update the numeric values
       const newValues = [...state.matrix.values];
       newValues[row][col] = value;
+      
+      // Update the expressions if provided
+      if (expression !== undefined) {
+        // Initialize expressions array if it doesn't exist
+        let newExpressions: string[][] = state.matrix.expressions 
+          ? JSON.parse(JSON.stringify(state.matrix.expressions)) // Deep copy
+          : state.matrix.values.map(row => row.map(val => val.toString()));
+        
+        // Update the expression at the specified position
+        newExpressions[row][col] = expression;
+        
+        return {
+          matrix: {
+            ...state.matrix,
+            values: newValues,
+            expressions: newExpressions,
+          }
+        };
+      }
+      
+      // If no expression provided, just update the values
       return {
         matrix: {
           ...state.matrix,
@@ -71,6 +93,25 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
         }
       }
       
+      // Handle expressions if they exist
+      let newExpressions = undefined;
+      if (state.matrix.expressions) {
+        // Initialize new expressions array
+        newExpressions = Array(newRows).fill(0).map(() => Array(newCols).fill('0'));
+        
+        // For identity positions, use "1" as expression
+        for (let i = 0; i < Math.min(newRows, newCols); i++) {
+          newExpressions[i][i] = "1";
+        }
+        
+        // Copy existing expressions where possible
+        for (let i = 0; i < Math.min(oldRows, newRows); i++) {
+          for (let j = 0; j < Math.min(oldCols, newCols); j++) {
+            newExpressions[i][j] = state.matrix.expressions[i][j];
+          }
+        }
+      }
+      
       // Note: Clearing transformed vectors is now handled in the MatrixInput component
       // to avoid circular dependency between stores
       
@@ -78,6 +119,7 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
         matrix: {
           values: newValues,
           dimension,
+          expressions: newExpressions,
         }
       };
     });
@@ -116,6 +158,17 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
         }
       }
       
+      // Handle expressions if they exist
+      let transposedExpressions = undefined;
+      if (state.matrix.expressions) {
+        transposedExpressions = Array(cols).fill(0).map(() => Array(rows).fill('0'));
+        for (let i = 0; i < rows; i++) {
+          for (let j = 0; j < cols; j++) {
+            transposedExpressions[j][i] = state.matrix.expressions[i][j];
+          }
+        }
+      }
+      
       // Log transposition for debugging
       console.log(`Transposed matrix from ${state.matrix.dimension} to ${newDimension}`);
       
@@ -124,6 +177,7 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
         matrix: {
           values: transposedValues,
           dimension: newDimension,
+          expressions: transposedExpressions,
         }
       };
     });
