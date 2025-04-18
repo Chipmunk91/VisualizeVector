@@ -20,31 +20,31 @@ const Grid = ({ size = 10, divisions = 10, color = "#444444" }: GridProps) => {
 
   return (
     <>
-      {/* XY Grid (horizontal) */}
+      {/* XZ Grid (horizontal - main plane with Z as vertical) */}
       <gridHelper
         args={[size, adjustedDivisions, color, color]}
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
       />
       
-      {/* XZ Grid (vertical along X) */}
+      {/* XY Grid (vertical along Z) */}
       <gridHelper
         args={[size, adjustedDivisions, color, color]}
         position={[0, 0, 0]}
         rotation={[Math.PI / 2, 0, 0]}
       />
       
-      {/* YZ Grid (vertical along Y) */}
+      {/* YZ Grid (vertical along X) */}
       <gridHelper
         args={[size, adjustedDivisions, color, color]}
         position={[0, 0, 0]}
         rotation={[0, 0, Math.PI / 2]}
       />
       
-      {/* Light gray background plane */}
+      {/* Light gray background plane on XZ plane */}
       <mesh 
-        position={[0, -0.01, 0]} 
-        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.01, 0]} 
+        rotation={[0, 0, 0]}
       >
         <planeGeometry args={[size, size]} />
         <meshStandardMaterial 

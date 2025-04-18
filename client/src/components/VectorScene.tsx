@@ -80,7 +80,8 @@ const VectorScene = () => {
     // Only set initial camera position on first render
     if (!cameraInitialized.current) {
       console.log("Setting initial camera position in VectorScene");
-      camera.position.set(8, 8, 8);
+      // Set camera position to view Z as vertical (standard 3D orientation)
+      camera.position.set(8, 4, 8);
       camera.lookAt(0, 0, 0);
       cameraInitialized.current = true;
     }
