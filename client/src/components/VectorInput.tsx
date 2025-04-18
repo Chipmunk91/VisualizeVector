@@ -98,7 +98,6 @@ const VectorInput = () => {
                       // Also select on double click to be safe
                       (e.target as HTMLInputElement).select();
                     }}
-                    step="any"
                   />
                 </div>
                 <div>
@@ -125,7 +124,6 @@ const VectorInput = () => {
                       // Also select on double click to be safe
                       (e.target as HTMLInputElement).select();
                     }}
-                    step="any"
                   />
                 </div>
               </div>
@@ -155,7 +153,6 @@ const VectorInput = () => {
                       // Also select on double click to be safe
                       (e.target as HTMLInputElement).select();
                     }}
-                    step="any"
                   />
                 </div>
                 <div>
@@ -182,7 +179,6 @@ const VectorInput = () => {
                       // Also select on double click to be safe
                       (e.target as HTMLInputElement).select();
                     }}
-                    step="any"
                   />
                 </div>
                 <div>
@@ -209,7 +205,6 @@ const VectorInput = () => {
                       // Also select on double click to be safe
                       (e.target as HTMLInputElement).select();
                     }}
-                    step="any"
                   />
                 </div>
               </div>

@@ -194,11 +194,6 @@ const MatrixInput = () => {
                       onChange={(e) => {
                         // Handle leading zeros properly (keep for decimals like 0.5)
                         let value = e.target.value;
-                        if (value.match(/^0[0-9]/) && !value.includes('.')) {
-                          value = value.replace(/^0+/, '');
-                          // Update the input value directly
-                          e.target.value = value;
-                        }
                         handleMatrixChange(rowIndex, colIndex, value);
                       }}
                       onClick={(e) => {
