@@ -80,7 +80,8 @@ const VectorScene = () => {
     // Only set initial camera position on first render
     if (!cameraInitialized.current) {
       console.log("Setting initial camera position in VectorScene");
-      camera.position.set(8, 8, 8);
+      camera.position.set(8, 0, 8);
+      camera.up.set(0, 0, 1); // Set Z-axis as up direction
       camera.lookAt(0, 0, 0);
       cameraInitialized.current = true;
     }

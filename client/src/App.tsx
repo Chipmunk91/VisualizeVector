@@ -141,7 +141,7 @@ function App() {
         {/* Canvas Container */}
         <div className="flex-1 border-2 border-blue-500">
           <Canvas
-            camera={{ position: [8, 8, 8], fov: 60 }}
+            camera={{ position: [8, 0, 8], fov: 60, up: [0, 0, 1] }}
             gl={{ antialias: true }}
             shadows
             style={{ background: "#ffffff" }}
