@@ -75,7 +75,7 @@ const Vector = ({ vector }: VectorProps) => {
       
       if (originalComponents.length > 0) {
         // Calculate delta from drag start
-        const sensitivity = 0.3; // Increased for more responsive movement
+        const sensitivity = 0.8; // Significantly increased for more responsive movement
         const deltaX = (vpMouse.x - dragStart.x) * sensitivity;
         const deltaY = (vpMouse.y - dragStart.y) * sensitivity;
         
@@ -83,8 +83,8 @@ const Vector = ({ vector }: VectorProps) => {
         const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
         const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
         
-        // Distance factor for scaling movement
-        const distanceFactor = Math.max(1, camera.position.length() * 0.1);
+        // Distance factor for scaling movement - improved to make dragging responsive at all zoom levels
+        const distanceFactor = Math.max(1, camera.position.length() * 0.15);
         
         let newComponents;
         if (components.length === 2) {

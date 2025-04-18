@@ -160,9 +160,6 @@ function App() {
               <VectorScene />
             </Suspense>
             
-            {/* Debug info */}
-            <axesHelper args={[5]} />
-            
             {/* Camera controls */}
             <Controls />
           </Canvas>
