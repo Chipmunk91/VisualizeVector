@@ -5,6 +5,8 @@ export type MatrixDimension = '2x2' | '2x3' | '3x2' | '3x3';
 export interface Matrix {
   values: number[][];
   dimension: MatrixDimension;
+  // Store original expressions entered by user
+  expressions?: string[][];
 }
 
 interface MatrixStore {

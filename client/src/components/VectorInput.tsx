@@ -30,9 +30,14 @@ const VectorInput = () => {
       const components = dimensions === "2d" 
         ? [xVal, yVal]
         : [xVal, yVal, zVal];
+        
+      // Create appropriate expressions array to store the original inputs
+      const expressions = dimensions === "2d"
+        ? [x, y]
+        : [x, y, z];
       
-      // Add the vector
-      addVector(components);
+      // Add the vector with both components and expressions
+      addVector(components, expressions);
       
       // Reset input fields
       setX("0");
@@ -294,34 +299,31 @@ const VectorInput = () => {
                         <Label>{index === 0 ? 'X' : index === 1 ? 'Y' : 'Z'}</Label>
                         <Input
                           type="text"
-                          value={value.toString()}
+                          // Show the original expression if available, otherwise the numeric value
+                          value={(vector.componentExpressions && vector.componentExpressions[index]) || value.toString()}
                           onChange={(e) => {
                             // Get the input value
-                            let value = e.target.value;
+                            let expressionValue = e.target.value;
                             
                             // Create a copy of the components array
                             const newComponents = [...vector.components];
                             
                             try {
                               // If input is empty, use 0
-                              if (value === '') {
+                              if (expressionValue === '') {
                                 newComponents[index] = 0;
                               } else {
                                 // Otherwise, evaluate the mathematical expression
-                                newComponents[index] = evaluateExpression(value);
+                                newComponents[index] = evaluateExpression(expressionValue);
                               }
                               
-                              // Update the vector with the new components
-                              updateVector(vector.id, newComponents);
+                              // Update the vector with both the new components and expression
+                              updateVector(vector.id, newComponents, expressionValue, index);
                             } catch (error) {
-                              console.log(`Error evaluating expression "${value}":`, error);
+                              console.log(`Error evaluating expression "${expressionValue}":`, error);
                               
-                              // Fallback to basic number parsing
-                              const numValue = parseFloat(value);
-                              if (!isNaN(numValue)) {
-                                newComponents[index] = numValue;
-                                updateVector(vector.id, newComponents);
-                              }
+                              // Don't update if there's an error in the expression
+                              // This allows the user to continue typing a complex expression
                             }
                           }}
                           onDoubleClick={(e) => {

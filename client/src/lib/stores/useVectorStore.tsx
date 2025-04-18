@@ -5,6 +5,8 @@ import { useMatrixStore } from "./useMatrixStore";
 export interface Vector {
   id: string;
   components: number[];
+  // Optional original expressions entered by user
+  componentExpressions?: string[];
   color: string;
   label: string;
   visible: boolean;
@@ -17,9 +19,9 @@ export interface Vector {
 
 interface VectorStore {
   vectors: Vector[];
-  addVector: (components: number[]) => void;
+  addVector: (components: number[], expressions?: string[]) => void;
   removeVector: (id: string) => void;
-  updateVector: (id: string, components: number[]) => void;
+  updateVector: (id: string, components: number[], expression?: string, index?: number) => void;
   updateVectorLabel: (id: string, label: string) => void;
   updateVectorColor: (id: string, color: string) => void;
   toggleVectorVisibility: (id: string) => void;
@@ -30,7 +32,7 @@ interface VectorStore {
 export const useVectorStore = create<VectorStore>((set) => ({
   vectors: [],
   
-  addVector: (components) => {
+  addVector: (components, expressions) => {
     const id = `vector-${Date.now()}`;
     
     // Get current vector numbers from existing vector names (v1, v2, etc.)
@@ -74,6 +76,7 @@ export const useVectorStore = create<VectorStore>((set) => ({
     const newVector: Vector = {
       id,
       components,
+      componentExpressions: expressions, // Store original expressions if provided
       color: getRandomColor(existingColors),
       label: `v${nextNumber}`,
       visible: true,
@@ -95,10 +98,27 @@ export const useVectorStore = create<VectorStore>((set) => ({
     }));
   },
   
-  updateVector: (id, components) => {
+  updateVector: (id, components, expression, index) => {
     set((state) => ({
       vectors: state.vectors.map((v) => {
         if (v.id === id) {
+          // If we're updating a specific component's expression
+          if (expression !== undefined && index !== undefined) {
+            // Initialize expressions array if it doesn't exist
+            const componentExpressions = v.componentExpressions ? 
+              [...v.componentExpressions] : 
+              [...v.components.map(c => c.toString())];
+            
+            // Update the expression at the specified index
+            componentExpressions[index] = expression;
+            
+            return { 
+              ...v, 
+              components, 
+              componentExpressions
+            };
+          }
+          // Otherwise just update the component values
           return { ...v, components };
         }
         return v;
