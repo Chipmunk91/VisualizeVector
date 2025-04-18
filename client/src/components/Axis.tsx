@@ -26,13 +26,13 @@ const Axis = ({ length = 10 }: AxisProps) => {
       </mesh>
       
       {/* Y Axis (Green) - Thick line */}
-      <mesh position={[0, axisLength/2, 0]}>
+      <mesh position={[0, axisLength/2, 0]} rotation={[0, 0, 0]}>
         <cylinderGeometry args={[0.05, 0.05, axisLength, 8]} />
         <meshStandardMaterial color="green" />
       </mesh>
       
-      {/* Z Axis (Blue) - Thick line */}
-      <mesh position={[0, 0, axisLength/2]} rotation={[Math.PI/2, 0, 0]}>
+      {/* Z Axis (Blue) - Thick line - Now vertical */}
+      <mesh position={[0, 0, axisLength/2]}>
         <cylinderGeometry args={[0.05, 0.05, axisLength, 8]} />
         <meshStandardMaterial color="blue" />
       </mesh>
@@ -50,13 +50,13 @@ const Axis = ({ length = 10 }: AxisProps) => {
       </mesh>
       
       {/* Cone at the end of Y axis */}
-      <mesh position={[0, axisLength, 0]}>
+      <mesh position={[0, axisLength, 0]} rotation={[Math.PI, 0, 0]}>
         <coneGeometry args={[0.2, 0.5, 8]} />
         <meshStandardMaterial color="green" />
       </mesh>
       
-      {/* Cone at the end of Z axis */}
-      <mesh position={[0, 0, axisLength]} rotation={[Math.PI/2, 0, 0]}>
+      {/* Cone at the end of Z axis - Now pointing up */}
+      <mesh position={[0, 0, axisLength]}>
         <coneGeometry args={[0.2, 0.5, 8]} />
         <meshStandardMaterial color="blue" />
       </mesh>

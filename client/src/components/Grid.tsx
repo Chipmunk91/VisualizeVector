@@ -20,25 +20,25 @@ const Grid = ({ size = 10, divisions = 10, color = "#444444" }: GridProps) => {
 
   return (
     <>
-      {/* XY Grid (floor) - with z axis pointing up */}
+      {/* XY Grid (floor) - with Z axis pointing up */}
       <gridHelper
         args={[size, adjustedDivisions, color, color]}
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
       />
       
-      {/* XZ Grid (vertical along Z) */}
+      {/* XZ Grid (vertical along Y) */}
       <gridHelper
         args={[size, adjustedDivisions, color, color]}
         position={[0, 0, 0]}
-        rotation={[0, Math.PI / 2, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
       />
       
-      {/* YZ Grid (vertical along Z) */}
+      {/* YZ Grid (vertical along X) */}
       <gridHelper
         args={[size, adjustedDivisions, color, color]}
         position={[0, 0, 0]}
-        rotation={[Math.PI / 2, 0, Math.PI / 2]}
+        rotation={[0, 0, Math.PI / 2]}
       />
       
       {/* Light gray background plane for the floor (XY plane) */}
