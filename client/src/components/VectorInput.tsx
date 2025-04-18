@@ -299,7 +299,7 @@ const VectorInput = () => {
                         <Label>{index === 0 ? 'X' : index === 1 ? 'Y' : 'Z'}</Label>
                         <Input
                           type="text"
-                          value={value}
+                          value={value.toString()}
                           onChange={(e) => {
                             // Get the input value
                             let value = e.target.value;
@@ -337,7 +337,6 @@ const VectorInput = () => {
                             // Also select on single click for better usability
                             (e.target as HTMLInputElement).select();
                           }}
-                          step="any"
                         />
                       </div>
                     ))}
