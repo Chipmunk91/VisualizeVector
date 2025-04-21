@@ -1,50 +1,60 @@
-import { useState, useEffect, useRef } from "react";
-import { useVectorStore } from "../lib/stores/useVectorStore";
-import { evaluateExpression } from "../lib/mathParser";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Trash, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Trash } from "lucide-react";
 import VectorAnalysis from "./VectorAnalysis";
+import { useVectorStore } from "../lib/stores/useVectorStore";
 import ColorPicker from "./ColorPicker";
+import { evaluateExpression } from "../lib/mathParser";
 
-// Simple implementation to avoid re-render issues
 const VectorInput = () => {
-  const { vectors, addVector, removeVector, updateVector, updateVectorLabel, updateVectorColor, toggleVectorVisibility } = useVectorStore();
+  // Define dimensions state (2D or 3D)
   const [dimensions, setDimensions] = useState<"2d" | "3d">("3d");
-  const [x, setX] = useState("0");
-  const [y, setY] = useState("0");
-  const [z, setZ] = useState("0");
-
-  // Add a new vector - simplified
+  
+  // Vector component values
+  const [x, setX] = useState("1");
+  const [y, setY] = useState("1");
+  const [z, setZ] = useState("1");
+  
+  // Get vector store functions
+  const { 
+    vectors,
+    addVector, 
+    removeVector, 
+    updateVector,
+    updateVectorLabel,
+    updateVectorColor,
+    toggleVectorVisibility,
+  } = useVectorStore();
+  
+  // Handle adding new vector
   const handleAddVector = () => {
     try {
-      // Safely parse inputs with default values, empty values treated as 0
-      // Also support mathematical expressions like 1/7 or 2^(1/3)
-      const xVal = x === '' ? 0 : evaluateExpression(x);
-      const yVal = y === '' ? 0 : evaluateExpression(y);
-      const zVal = z === '' ? 0 : evaluateExpression(z);
+      // Convert expressions to numeric values
+      const xValue = evaluateExpression(x);
+      const yValue = evaluateExpression(y);
       
-      // Create appropriate components array
+      // Create components array based on dimensions
       const components = dimensions === "2d" 
-        ? [xVal, yVal]
-        : [xVal, yVal, zVal];
-        
-      // Create appropriate expressions array to store the original inputs
+        ? [xValue, yValue]
+        : [xValue, yValue, evaluateExpression(z)];
+      
+      // Create expressions array to store original input
       const expressions = dimensions === "2d"
         ? [x, y]
         : [x, y, z];
       
-      // Add the vector with both components and expressions
+      // Add the vector
       addVector(components, expressions);
       
-      // Reset input fields
-      setX("0");
-      setY("0");
-      setZ("0");
+      // Reset input fields to default
+      setX("1");
+      setY("1");
+      setZ("1");
     } catch (error) {
-      console.log("Error evaluating vector expressions:", error);
+      console.error("Error adding vector:", error);
     }
   };
 
@@ -52,11 +62,11 @@ const VectorInput = () => {
   const originalVectors = vectors.filter(v => !v.isTransformed);
 
   return (
-    <div className="p-4 h-full flex flex-col">
-      <h2 className="text-xl font-bold mb-4">Vector Controls</h2>
+    <div className="p-4 h-full flex flex-col space-y-4 overflow-y-auto">
+      <h2 className="text-xl font-bold">Vector Controls</h2>
       
       {/* Add new vector */}
-      <Card className="mb-4">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Add New Vector</CardTitle>
         </CardHeader>
@@ -336,11 +346,11 @@ const VectorInput = () => {
       <VectorAnalysis />
       
       {/* Vector list */}
-      <Card className="flex-1 overflow-y-auto">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Vector List</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[400px] overflow-y-auto">
           {originalVectors.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
               No vectors added yet. Add a vector to get started.
@@ -350,56 +360,37 @@ const VectorInput = () => {
               {originalVectors.map((vector) => (
                 <li key={vector.id} className="border border-border rounded-md p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-2">
                       <ColorPicker 
                         currentColor={vector.color}
                         onChange={(color) => updateVectorColor(vector.id, color)}
-                        className="mr-2"
+                        className="h-5 w-5"
                       />
-                      <span className="font-medium">
+                      <Input 
+                        value={vector.label}
+                        onChange={(e) => updateVectorLabel(vector.id, e.target.value)}
+                        className="h-7 w-16 text-sm py-0 px-2"
+                      />
+                      <div className="text-xs text-muted-foreground">
                         {vector.components.length}D
-                      </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                    <div className="flex items-center gap-1">
+                      <button
                         onClick={() => toggleVectorVisibility(vector.id)}
+                        className="text-muted-foreground hover:text-foreground p-1 rounded-full"
+                        title={vector.visible ? "Hide Vector" : "Show Vector"}
                       >
-                        {vector.visible ? (
-                          <Eye className="h-4 w-4" />
-                        ) : (
-                          <EyeOff className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                        {vector.visible ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                      <button
                         onClick={() => removeVector(vector.id)}
+                        className="text-muted-foreground hover:text-red-500 p-1 rounded-full"
+                        title="Remove Vector"
                       >
-                        <Trash className="h-4 w-4 text-destructive" />
-                      </Button>
+                        <Trash size={16} />
+                      </button>
                     </div>
-                  </div>
-                  
-                  {/* Vector name field */}
-                  <div className="mb-3">
-                    <Label htmlFor={`vector-name-${vector.id}`}>Vector Name</Label>
-                    <Input
-                      id={`vector-name-${vector.id}`}
-                      type="text"
-                      value={vector.label}
-                      onChange={(e) => updateVectorLabel(vector.id, e.target.value)}
-                      placeholder="Enter vector name"
-                      onDoubleClick={(e) => {
-                        // Select all text on double click for easier editing
-                        (e.target as HTMLInputElement).select();
-                      }}
-                      onClick={(e) => {
-                        // Also select on single click for better usability
-                        (e.target as HTMLInputElement).select();
-                      }}
-                    />
                   </div>
                   
                   {/* Vector components */}
