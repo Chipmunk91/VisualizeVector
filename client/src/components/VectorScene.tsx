@@ -4,7 +4,7 @@ import { useVectorStore, Vector as VectorType } from "../lib/stores/useVectorSto
 import Grid from "./Grid";
 import Axis from "./Axis";
 import Vector from "./Vector";
-import { useMatrixStore } from "../lib/stores/useMatrixStore";
+import { useMatrixStore, isIdentityMatrix } from "../lib/stores/useMatrixStore";
 import * as THREE from "three";
 
 // Default vectors that will always be shown for testing
@@ -93,6 +93,11 @@ const VectorScene = () => {
   const { matrix, showTransformed, showDimensionVisualization } = useMatrixStore();
   const { camera } = useThree();
   const [allVectors, setAllVectors] = useState<VectorType[]>([...defaultVectors]);
+  
+  // Check if the matrix is an identity matrix to decide whether to show transformed vectors
+  const isIdentity = useMemo(() => {
+    return isIdentityMatrix(matrix.values);
+  }, [matrix.values]);
   
   // Default grid size
   const defaultSize = 10;

@@ -328,10 +328,22 @@ const Vector = ({ vector }: VectorProps) => {
               return null;
             }
             
-            // Check if this is a transformed vector with the same components as the original
-            const showCoordinates = !isTransformed || !originalVector || !components.every(
-              (val, idx) => Math.abs(val - originalVector.components[idx]) < 0.001
-            );
+            // For transformed vectors:
+            // 1. Don't show coordinates if vector is the same as the original
+            // 2. Check if matrix is an identity matrix (this will be used in the next condition)
+            const { isIdentityMatrix } = require('../lib/stores/useMatrixStore');
+            const { matrix } = useMatrixStore.getState();
+            const isIdentity = isIdentityMatrix(matrix.values);
+            
+            // Show coordinates only if:
+            // - Not a transformed vector, OR
+            // - Matrix is not identity, AND one of:
+            //   - No original vector found, OR
+            //   - Components are different from original
+            const showCoordinates = !isTransformed || 
+              (!isIdentity && (!originalVector || !components.every(
+                (val, idx) => Math.abs(val - originalVector.components[idx]) < 0.001
+              )));
             
             // Only show coordinates if they're meaningful
             if (showCoordinates) {
