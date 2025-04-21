@@ -148,45 +148,135 @@ const VectorScene = () => {
     return calculateMatrixRank(matrix.values);
   }, [matrix.values, showDimensionVisualization]);
   
-  // Determine principal direction of the matrix (simplified)
-  const getPrincipalDirection = useMemo(() => {
+  // Determine transformation characteristics for visualization
+  const getTransformationSpace = useMemo(() => {
     // Only compute if visualization is enabled
-    if (!showDimensionVisualization) return new THREE.Vector3(1, 0, 0);
+    if (!showDimensionVisualization) {
+      return {
+        rank1Direction: new THREE.Vector3(1, 0, 0),
+        rank2Normal: new THREE.Vector3(0, 0, 1),
+        rank2Basis1: new THREE.Vector3(1, 0, 0),
+        rank2Basis2: new THREE.Vector3(0, 1, 0)
+      };
+    }
     
     // Get matrix values
     const m = matrix.values;
+    console.log("Matrix for transformation space:", m);
     
     // For a 3x3 matrix
     if (m.length === 3 && m[0].length === 3) {
-      // For rank 1 matrices, find the principal direction (simplified approach)
-      // We're looking for the direction with the largest component after transformation
+      // Create the column vectors of the matrix (these define the transformation)
+      const colVec1 = new THREE.Vector3(m[0][0], m[1][0], m[2][0]);
+      const colVec2 = new THREE.Vector3(m[0][1], m[1][1], m[2][1]);
+      const colVec3 = new THREE.Vector3(m[0][2], m[1][2], m[2][2]);
       
-      // Test vectors
-      const testVectors = [
-        new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(0, 1, 0),
-        new THREE.Vector3(0, 0, 1)
+      // For rank 1 (line): The column with largest magnitude determines the direction
+      const magnitudes = [
+        { vec: colVec1, mag: colVec1.length() },
+        { vec: colVec2, mag: colVec2.length() },
+        { vec: colVec3, mag: colVec3.length() }
       ];
       
-      // Transform each vector with the matrix
-      const transformedVectors = testVectors.map(v => {
-        const result = new THREE.Vector3();
-        // Apply matrix transformation
-        result.x = m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z;
-        result.y = m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z;
-        result.z = m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z;
-        return { vector: v, transformed: result, magnitude: result.length() };
+      // Sort by magnitude
+      magnitudes.sort((a, b) => b.mag - a.mag);
+      
+      // Get primary direction (largest column vector)
+      let rank1Direction = magnitudes[0].vec.clone().normalize();
+      
+      // Handle zero vectors
+      if (magnitudes[0].mag < 0.00001) {
+        rank1Direction = new THREE.Vector3(1, 0, 0);
+      }
+      
+      // For rank 2 (plane): Find two linearly independent column vectors
+      let rank2Basis1 = rank1Direction.clone();
+      let rank2Basis2 = new THREE.Vector3();
+      
+      // Try to find a second linearly independent vector
+      if (magnitudes[1].mag > 0.00001) {
+        // Get second vector
+        const secondVec = magnitudes[1].vec.clone();
+        
+        // Make it orthogonal to the first
+        secondVec.sub(rank1Direction.clone().multiplyScalar(
+          secondVec.dot(rank1Direction)
+        ));
+        
+        // Normalize
+        if (secondVec.length() > 0.00001) {
+          rank2Basis2 = secondVec.normalize();
+        } else if (magnitudes[2].mag > 0.00001) {
+          // Try the third vector if second is dependent
+          const thirdVec = magnitudes[2].vec.clone();
+          thirdVec.sub(rank1Direction.clone().multiplyScalar(
+            thirdVec.dot(rank1Direction)
+          ));
+          
+          if (thirdVec.length() > 0.00001) {
+            rank2Basis2 = thirdVec.normalize();
+          } else {
+            // Fallback: construct an orthogonal vector
+            if (Math.abs(rank1Direction.x) < 0.9) {
+              rank2Basis2.set(1, 0, 0).sub(
+                rank1Direction.clone().multiplyScalar(rank1Direction.x)
+              ).normalize();
+            } else {
+              rank2Basis2.set(0, 1, 0).sub(
+                rank1Direction.clone().multiplyScalar(rank1Direction.y)
+              ).normalize();
+            }
+          }
+        } else {
+          // Fallback: construct an orthogonal vector
+          if (Math.abs(rank1Direction.x) < 0.9) {
+            rank2Basis2.set(1, 0, 0).sub(
+              rank1Direction.clone().multiplyScalar(rank1Direction.x)
+            ).normalize();
+          } else {
+            rank2Basis2.set(0, 1, 0).sub(
+              rank1Direction.clone().multiplyScalar(rank1Direction.y)
+            ).normalize();
+          }
+        }
+      } else {
+        // Fallback: construct an orthogonal vector
+        if (Math.abs(rank1Direction.x) < 0.9) {
+          rank2Basis2.set(1, 0, 0).sub(
+            rank1Direction.clone().multiplyScalar(rank1Direction.x)
+          ).normalize();
+        } else {
+          rank2Basis2.set(0, 1, 0).sub(
+            rank1Direction.clone().multiplyScalar(rank1Direction.y)
+          ).normalize();
+        }
+      }
+      
+      // Calculate normal vector to the plane
+      const rank2Normal = new THREE.Vector3().crossVectors(rank1Direction, rank2Basis2).normalize();
+      
+      console.log("Transformation space computed:", {
+        rank1Direction, 
+        rank2Normal,
+        rank2Basis1: rank1Direction,
+        rank2Basis2
       });
       
-      // Find the vector that results in the largest magnitude
-      transformedVectors.sort((a, b) => b.magnitude - a.magnitude);
-      
-      // Return the principal direction (the input vector that resulted in the largest output)
-      return transformedVectors[0].vector;
+      return {
+        rank1Direction,
+        rank2Normal,
+        rank2Basis1: rank1Direction,
+        rank2Basis2
+      };
     }
     
     // Default fallback
-    return new THREE.Vector3(1, 0, 0);
+    return {
+      rank1Direction: new THREE.Vector3(1, 0, 0),
+      rank2Normal: new THREE.Vector3(0, 0, 1),
+      rank2Basis1: new THREE.Vector3(1, 0, 0),
+      rank2Basis2: new THREE.Vector3(0, 1, 0)
+    };
   }, [matrix.values, showDimensionVisualization]);
   
   // Create visualization elements based on rank
@@ -198,15 +288,15 @@ const VectorScene = () => {
     // Size of visualization (adjusted to match grid)
     const size = 5;
     
-    // Principal direction for alignment
-    const principalDir = getPrincipalDirection;
+    // Get transformation space info
+    const transformSpace = getTransformationSpace;
     
     // Create quaternion to rotate to align with principal direction
     const quaternion = new THREE.Quaternion();
     if (matrixRank === 1) {
       // For rank 1, align cylinder with principal direction
       const startVec = new THREE.Vector3(0, 0, 1); // Default cylinder orientation
-      quaternion.setFromUnitVectors(startVec, principalDir.normalize());
+      quaternion.setFromUnitVectors(startVec, transformSpace.rank1Direction);
     }
     
     if (matrixRank === 1) {
@@ -221,25 +311,36 @@ const VectorScene = () => {
       );
     } else if (matrixRank === 2) {
       // Rank 2: Plane visualization (2D)
-      // For simplicity, we'll just use XY plane for now
+      // Get basis and normal vectors from transformation space
+      
+      // Create a quaternion to align the plane with the matrix's column vectors
+      const planeQuaternion = new THREE.Quaternion();
+      const defaultNormal = new THREE.Vector3(0, 0, 1); // Default plane normal
+      
+      // Rotate to match transformation space
+      planeQuaternion.setFromUnitVectors(defaultNormal, transformSpace.rank2Normal);
+      
       return (
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[size * 2, size * 2]} />
-          <meshStandardMaterial color="#00BFFF" transparent opacity={0.2} side={THREE.DoubleSide} />
-        </mesh>
+        <group quaternion={planeQuaternion.toArray()}>
+          <mesh>
+            <planeGeometry args={[size * 2, size * 2]} />
+            <meshStandardMaterial color="#00BFFF" transparent opacity={0.2} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
       );
     } else if (matrixRank === 3) {
       // Rank 3: Space visualization (3D)
+      // Using very low opacity to ensure vectors remain clearly visible
       return (
         <mesh>
           <boxGeometry args={[size * 2, size * 2, size * 2]} />
-          <meshStandardMaterial color="#FF6347" transparent opacity={0.1} />
+          <meshStandardMaterial color="#FF6347" transparent opacity={0.05} />
         </mesh>
       );
     }
     
     return null;
-  }, [matrixRank, showDimensionVisualization, getPrincipalDirection]);
+  }, [matrixRank, showDimensionVisualization, getTransformationSpace]);
   
   return (
     <>
