@@ -337,135 +337,147 @@ const VectorScene = () => {
         };
       }
       
-      // Special case for 2x2 matrices with rank 1 (columns are dependent)
-      if (rows === 2 && cols === 2 && matrixRank === 1) {
-        console.log("Special case: 2x2 matrix with rank 1");
-        
-        // For matrices like [[9,1],[9,1]] or [[10,1],[10,1]], the columns are proportional
-        // We need to ensure consistent behavior regardless of magnitude
-        
-        // Directly use the values from the matrix instead of depending on vector magnitude
-        const directionVector = new THREE.Vector3(m[0][0], m[1][0], 0);
-        const normalizedDirection = directionVector.clone().normalize();
-        
-        console.log("2x2 rank 1 direction vector:", normalizedDirection);
-        
-        // Manually create an orthogonal vector for the second basis
-        const orthogonalVector = new THREE.Vector3(-normalizedDirection.y, normalizedDirection.x, 0).normalize();
-        
-        return {
-          rank1Direction: normalizedDirection,
-          rank2Normal: new THREE.Vector3(0, 0, 1),
-          rank2Basis1: normalizedDirection,
-          rank2Basis2: orthogonalVector
-        };
-      }
+      // Our improved approach, completely rewritten to be more robust
       
-      // For other cases, use the general approach with magnitudes
-      const magnitudes = [
+      // Start with the basic collection of column vectors and their magnitudes
+      const colVectors = [
         { vec: colVec1, mag: colVec1.length() },
         { vec: colVec2, mag: colVec2.length() },
         { vec: colVec3, mag: colVec3.length() }
       ];
       
-      // Sort by magnitude
-      magnitudes.sort((a, b) => b.mag - a.mag);
-      
-      // Get primary direction (largest column vector)
-      let rank1Direction = magnitudes[0].vec.clone().normalize();
-      
-      // Handle zero vectors
-      if (magnitudes[0].mag < 0.00001) {
-        rank1Direction = new THREE.Vector3(1, 0, 0);
-      }
-      
-      // For rank 2 (plane): Find two linearly independent column vectors
-      let rank2Basis1 = rank1Direction.clone();
-      let rank2Basis2 = new THREE.Vector3();
-      
-      // Try to find a second linearly independent vector
-      if (magnitudes[1].mag > 0.00001) {
-        // Get second vector
-        const secondVec = magnitudes[1].vec.clone();
+      // Handle each rank differently
+      if (matrixRank === 1) {
+        // RANK 1: For rank 1 matrices, ALWAYS use the first column vector direction
+        // (regardless of magnitude) to ensure consistent behavior
+        console.log("Handling rank 1 matrix");
         
-        // Make it orthogonal to the first
-        secondVec.sub(rank1Direction.clone().multiplyScalar(
-          secondVec.dot(rank1Direction)
-        ));
+        // Create first column vector based on matrix dimensions
+        let firstColVector: THREE.Vector3;
         
-        // Normalize
-        if (secondVec.length() > 0.00001) {
-          rank2Basis2 = secondVec.normalize();
-        } else if (magnitudes[2].mag > 0.00001) {
-          // Try the third vector if second is dependent
-          const thirdVec = magnitudes[2].vec.clone();
-          thirdVec.sub(rank1Direction.clone().multiplyScalar(
-            thirdVec.dot(rank1Direction)
-          ));
+        if (rows === 3) {
+          // 3x3 or 3x2 matrix
+          firstColVector = new THREE.Vector3(m[0][0], m[1][0], m[2][0]);
+        } else if (rows === 2) {
+          // 2x3 or 2x2 matrix
+          firstColVector = new THREE.Vector3(m[0][0], m[1][0], 0);
+        } else {
+          // Shouldn't happen, use default
+          firstColVector = colVec1.clone();
+        }
+        
+        // Normalize to get direction (magnitude doesn't matter)
+        const direction = firstColVector.clone().normalize();
+        console.log("Rank 1 direction vector:", direction);
+        
+        // Create orthogonal vectors for the basis
+        let orthogonal = new THREE.Vector3();
+        if (Math.abs(direction.x) < 0.9) {
+          orthogonal.set(1, 0, 0).sub(
+            direction.clone().multiplyScalar(direction.x)
+          ).normalize();
+        } else {
+          orthogonal.set(0, 1, 0).sub(
+            direction.clone().multiplyScalar(direction.y)
+          ).normalize();
+        }
+        
+        // Calculate normal for rank 2 plane (will be used if we toggle to rank 2)
+        const normal = new THREE.Vector3().crossVectors(direction, orthogonal).normalize();
+        
+        // Return the transformation space for rank 1
+        return {
+          rank1Direction: direction,
+          rank2Normal: normal,
+          rank2Basis1: direction,
+          rank2Basis2: orthogonal
+        };
+      } 
+      else {
+        // RANK 2 or 3: Can use magnitude-based approach
+        // Sort vectors by magnitude (largest first)
+        colVectors.sort((a, b) => b.mag - a.mag);
+        
+        // Primary direction is the largest vector
+        const direction = colVectors[0].vec.clone().normalize();
+        
+        // Find a second linearly independent vector for rank2Basis2
+        let secondVector = new THREE.Vector3();
+        
+        // Try using the second largest vector, making it orthogonal to the first
+        if (colVectors[1].mag > 0.00001) {
+          const tempVec = colVectors[1].vec.clone();
+          tempVec.sub(direction.clone().multiplyScalar(tempVec.dot(direction)));
           
-          if (thirdVec.length() > 0.00001) {
-            rank2Basis2 = thirdVec.normalize();
+          if (tempVec.length() > 0.00001) {
+            // Second vector is good
+            secondVector = tempVec.normalize();
           } else {
-            // Fallback: construct an orthogonal vector
-            if (Math.abs(rank1Direction.x) < 0.9) {
-              rank2Basis2.set(1, 0, 0).sub(
-                rank1Direction.clone().multiplyScalar(rank1Direction.x)
-              ).normalize();
+            // Try third vector if available
+            if (colVectors[2].mag > 0.00001) {
+              const thirdVec = colVectors[2].vec.clone();
+              thirdVec.sub(direction.clone().multiplyScalar(thirdVec.dot(direction)));
+              
+              if (thirdVec.length() > 0.00001) {
+                secondVector = thirdVec.normalize();
+              } else {
+                // Generate an orthogonal vector
+                if (Math.abs(direction.x) < 0.9) {
+                  secondVector.set(1, 0, 0).sub(direction.clone().multiplyScalar(direction.x)).normalize();
+                } else {
+                  secondVector.set(0, 1, 0).sub(direction.clone().multiplyScalar(direction.y)).normalize();
+                }
+              }
             } else {
-              rank2Basis2.set(0, 1, 0).sub(
-                rank1Direction.clone().multiplyScalar(rank1Direction.y)
-              ).normalize();
+              // Generate an orthogonal vector
+              if (Math.abs(direction.x) < 0.9) {
+                secondVector.set(1, 0, 0).sub(direction.clone().multiplyScalar(direction.x)).normalize();
+              } else {
+                secondVector.set(0, 1, 0).sub(direction.clone().multiplyScalar(direction.y)).normalize();
+              }
             }
           }
         } else {
-          // Fallback: construct an orthogonal vector
-          if (Math.abs(rank1Direction.x) < 0.9) {
-            rank2Basis2.set(1, 0, 0).sub(
-              rank1Direction.clone().multiplyScalar(rank1Direction.x)
-            ).normalize();
+          // Generate an orthogonal vector if no suitable second vector exists
+          if (Math.abs(direction.x) < 0.9) {
+            secondVector.set(1, 0, 0).sub(direction.clone().multiplyScalar(direction.x)).normalize();
           } else {
-            rank2Basis2.set(0, 1, 0).sub(
-              rank1Direction.clone().multiplyScalar(rank1Direction.y)
-            ).normalize();
+            secondVector.set(0, 1, 0).sub(direction.clone().multiplyScalar(direction.y)).normalize();
           }
         }
-      } else {
-        // Fallback: construct an orthogonal vector
-        if (Math.abs(rank1Direction.x) < 0.9) {
-          rank2Basis2.set(1, 0, 0).sub(
-            rank1Direction.clone().multiplyScalar(rank1Direction.x)
-          ).normalize();
-        } else {
-          rank2Basis2.set(0, 1, 0).sub(
-            rank1Direction.clone().multiplyScalar(rank1Direction.y)
-          ).normalize();
-        }
+        
+        // Calculate normal vector for the plane
+        const normal = new THREE.Vector3().crossVectors(direction, secondVector).normalize();
+        
+        console.log("Space computed for rank", matrixRank, "matrix:", {
+          rank1Direction: direction,
+          rank2Normal: normal,
+          rank2Basis1: direction,
+          rank2Basis2: secondVector
+        });
+        
+        // Return the transformation space
+        return {
+          rank1Direction: direction,
+          rank2Normal: normal,
+          rank2Basis1: direction,
+          rank2Basis2: secondVector
+        };
       }
-      
-      // Calculate normal vector to the plane
-      const rank2Normal = new THREE.Vector3().crossVectors(rank1Direction, rank2Basis2).normalize();
-      
-      console.log("Transformation space computed:", {
-        rank1Direction, 
-        rank2Normal,
-        rank2Basis1: rank1Direction,
-        rank2Basis2
-      });
-      
-      return {
-        rank1Direction,
-        rank2Normal,
-        rank2Basis1: rank1Direction,
-        rank2Basis2
-      };
     }
     
-    // Default fallback
+    // Default fallback - should never reach here but provide sensible defaults
+    const defaultDirection = new THREE.Vector3(1, 0, 0);
+    const defaultSecondary = new THREE.Vector3(0, 1, 0);
+    const defaultNormal = new THREE.Vector3(0, 0, 1);
+    
+    console.log("Using default transformation space (fallback)");
+    
     return {
-      rank1Direction: new THREE.Vector3(1, 0, 0),
-      rank2Normal: new THREE.Vector3(0, 0, 1),
-      rank2Basis1: new THREE.Vector3(1, 0, 0),
-      rank2Basis2: new THREE.Vector3(0, 1, 0)
+      rank1Direction: defaultDirection,
+      rank2Normal: defaultNormal,
+      rank2Basis1: defaultDirection,
+      rank2Basis2: defaultSecondary
     };
   }, [matrix.values, matrix.dimension, showDimensionVisualization]);
   
