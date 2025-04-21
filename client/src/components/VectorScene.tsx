@@ -23,8 +23,15 @@ const defaultVectors: VectorType[] = [
     label: "Y",
     visible: true,
     isTransformed: false
+  },
+  {
+    id: "default-z",
+    components: [0, 0, 3],
+    color: "#0000FF",
+    label: "Z",
+    visible: true,
+    isTransformed: false
   }
-  // Z axis is already provided by the Axis component, so we don't need default-z
 ];
 
 const VectorScene = () => {
