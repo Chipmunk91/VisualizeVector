@@ -337,6 +337,30 @@ const VectorScene = () => {
         };
       }
       
+      // Special case for 2x2 matrices with rank 1 (columns are dependent)
+      if (rows === 2 && cols === 2 && matrixRank === 1) {
+        console.log("Special case: 2x2 matrix with rank 1");
+        
+        // For matrices like [[9,1],[9,1]] or [[10,1],[10,1]], the columns are proportional
+        // We need to ensure consistent behavior regardless of magnitude
+        
+        // Directly use the values from the matrix instead of depending on vector magnitude
+        const directionVector = new THREE.Vector3(m[0][0], m[1][0], 0);
+        const normalizedDirection = directionVector.clone().normalize();
+        
+        console.log("2x2 rank 1 direction vector:", normalizedDirection);
+        
+        // Manually create an orthogonal vector for the second basis
+        const orthogonalVector = new THREE.Vector3(-normalizedDirection.y, normalizedDirection.x, 0).normalize();
+        
+        return {
+          rank1Direction: normalizedDirection,
+          rank2Normal: new THREE.Vector3(0, 0, 1),
+          rank2Basis1: normalizedDirection,
+          rank2Basis2: orthogonalVector
+        };
+      }
+      
       // For other cases, use the general approach with magnitudes
       const magnitudes = [
         { vec: colVec1, mag: colVec1.length() },
