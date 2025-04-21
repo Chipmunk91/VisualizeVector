@@ -95,6 +95,28 @@ const VectorInput = () => {
                       }
                       setX(value);
                     }}
+                    onBlur={(e) => {
+                      // When focus leaves the input field, convert expression to numeric value
+                      try {
+                        const expressionValue = e.target.value;
+                        // Skip if expression is empty
+                        if (expressionValue.trim() === '') return;
+                        
+                        // Skip if it's already a simple number
+                        if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                        
+                        // Try to evaluate the expression
+                        const numericValue = evaluateExpression(expressionValue);
+                        // Format to 8 decimal places, removing trailing zeros
+                        const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                        
+                        // Update the state with the evaluated value
+                        setX(formattedValue);
+                      } catch (error) {
+                        // Keep the original expression if evaluation fails
+                        console.log("Error converting expression to numeric form:", error);
+                      }
+                    }}
                     onClick={(e) => {
                       // Select all on click
                       (e.target as HTMLInputElement).select();
@@ -120,6 +142,28 @@ const VectorInput = () => {
                         e.target.value = value;
                       }
                       setY(value);
+                    }}
+                    onBlur={(e) => {
+                      // When focus leaves the input field, convert expression to numeric value
+                      try {
+                        const expressionValue = e.target.value;
+                        // Skip if expression is empty
+                        if (expressionValue.trim() === '') return;
+                        
+                        // Skip if it's already a simple number
+                        if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                        
+                        // Try to evaluate the expression
+                        const numericValue = evaluateExpression(expressionValue);
+                        // Format to 8 decimal places, removing trailing zeros
+                        const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                        
+                        // Update the state with the evaluated value
+                        setY(formattedValue);
+                      } catch (error) {
+                        // Keep the original expression if evaluation fails
+                        console.log("Error converting expression to numeric form:", error);
+                      }
                     }}
                     onClick={(e) => {
                       // Select all on click
@@ -150,6 +194,28 @@ const VectorInput = () => {
                       }
                       setX(value);
                     }}
+                    onBlur={(e) => {
+                      // When focus leaves the input field, convert expression to numeric value
+                      try {
+                        const expressionValue = e.target.value;
+                        // Skip if expression is empty
+                        if (expressionValue.trim() === '') return;
+                        
+                        // Skip if it's already a simple number
+                        if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                        
+                        // Try to evaluate the expression
+                        const numericValue = evaluateExpression(expressionValue);
+                        // Format to 8 decimal places, removing trailing zeros
+                        const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                        
+                        // Update the state with the evaluated value
+                        setX(formattedValue);
+                      } catch (error) {
+                        // Keep the original expression if evaluation fails
+                        console.log("Error converting expression to numeric form:", error);
+                      }
+                    }}
                     onClick={(e) => {
                       // Select all on click
                       (e.target as HTMLInputElement).select();
@@ -176,6 +242,28 @@ const VectorInput = () => {
                       }
                       setY(value);
                     }}
+                    onBlur={(e) => {
+                      // When focus leaves the input field, convert expression to numeric value
+                      try {
+                        const expressionValue = e.target.value;
+                        // Skip if expression is empty
+                        if (expressionValue.trim() === '') return;
+                        
+                        // Skip if it's already a simple number
+                        if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                        
+                        // Try to evaluate the expression
+                        const numericValue = evaluateExpression(expressionValue);
+                        // Format to 8 decimal places, removing trailing zeros
+                        const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                        
+                        // Update the state with the evaluated value
+                        setY(formattedValue);
+                      } catch (error) {
+                        // Keep the original expression if evaluation fails
+                        console.log("Error converting expression to numeric form:", error);
+                      }
+                    }}
                     onClick={(e) => {
                       // Select all on click
                       (e.target as HTMLInputElement).select();
@@ -201,6 +289,28 @@ const VectorInput = () => {
                         e.target.value = value;
                       }
                       setZ(value);
+                    }}
+                    onBlur={(e) => {
+                      // When focus leaves the input field, convert expression to numeric value
+                      try {
+                        const expressionValue = e.target.value;
+                        // Skip if expression is empty
+                        if (expressionValue.trim() === '') return;
+                        
+                        // Skip if it's already a simple number
+                        if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                        
+                        // Try to evaluate the expression
+                        const numericValue = evaluateExpression(expressionValue);
+                        // Format to 8 decimal places, removing trailing zeros
+                        const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                        
+                        // Update the state with the evaluated value
+                        setZ(formattedValue);
+                      } catch (error) {
+                        // Keep the original expression if evaluation fails
+                        console.log("Error converting expression to numeric form:", error);
+                      }
                     }}
                     onClick={(e) => {
                       // Select all on click
@@ -324,6 +434,32 @@ const VectorInput = () => {
                               
                               // Don't update if there's an error in the expression
                               // This allows the user to continue typing a complex expression
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // When focus leaves the input field, convert expression to numeric value if it's a valid math expression
+                            try {
+                              const expressionValue = e.target.value;
+                              // Skip if expression is empty
+                              if (expressionValue.trim() === '') return;
+                              
+                              // Skip if it's already a simple number
+                              if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                              
+                              // Try to evaluate the expression
+                              const numericValue = evaluateExpression(expressionValue);
+                              // Format to 8 decimal places for readability, removing trailing zeros
+                              const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                              
+                              // Update the components with the evaluated value
+                              const newComponents = [...vector.components];
+                              newComponents[index] = numericValue;
+                              
+                              // Update with the numeric representation instead of the expression
+                              updateVector(vector.id, newComponents, formattedValue, index);
+                            } catch (error) {
+                              // Keep the original expression if evaluation fails
+                              console.log("Error converting expression to numeric form:", error);
                             }
                           }}
                           onDoubleClick={(e) => {

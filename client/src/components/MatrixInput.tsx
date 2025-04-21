@@ -196,6 +196,28 @@ const MatrixInput = () => {
                         let value = e.target.value;
                         handleMatrixChange(rowIndex, colIndex, value);
                       }}
+                      onBlur={(e) => {
+                        // When focus leaves the input field, convert expression to numeric value
+                        try {
+                          const expressionValue = e.target.value;
+                          // Skip if expression is empty
+                          if (expressionValue.trim() === '') return;
+                          
+                          // Skip if it's already a simple number
+                          if (/^-?\d+(\.\d+)?$/.test(expressionValue)) return;
+                          
+                          // Try to evaluate the expression
+                          const numericValue = evaluateExpression(expressionValue);
+                          // Format to 8 decimal places, removing trailing zeros
+                          const formattedValue = numericValue.toFixed(8).replace(/\.?0+$/, '');
+                          
+                          // Update the matrix with the evaluated value and formatted expression
+                          updateMatrixValue(rowIndex, colIndex, numericValue, formattedValue);
+                        } catch (error) {
+                          // Keep the original expression if evaluation fails
+                          console.log("Error converting matrix expression to numeric form:", error);
+                        }
+                      }}
                       onClick={(e) => {
                         // Select all on click
                         (e.target as HTMLInputElement).select();
