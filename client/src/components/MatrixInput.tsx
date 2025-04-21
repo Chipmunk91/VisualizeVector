@@ -10,7 +10,16 @@ import MatrixAnalysis from "./MatrixAnalysis";
 
 // Extremely simplified component - no side effects
 const MatrixInput = () => {
-  const { matrix, updateMatrixValue, setDimension, showTransformed, toggleShowTransformed, transposeMatrix } = useMatrixStore();
+  const { 
+    matrix, 
+    updateMatrixValue, 
+    setDimension, 
+    showTransformed, 
+    toggleShowTransformed, 
+    showDimensionVisualization,
+    toggleDimensionVisualization,
+    transposeMatrix 
+  } = useMatrixStore();
 
   // These handlers don't have any side effects beyond the store update
   const handleMatrixChange = (row: number, col: number, value: string) => {
@@ -110,6 +119,17 @@ const MatrixInput = () => {
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <Label htmlFor="show-transformed">Show Transformed Vectors</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="show-dimension-visualization"
+                checked={showDimensionVisualization}
+                onChange={toggleDimensionVisualization}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <Label htmlFor="show-dimension-visualization">Visualize Matrix Dimension</Label>
             </div>
             
             <div>

@@ -1,10 +1,11 @@
 import { useThree } from "@react-three/fiber";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useVectorStore, Vector as VectorType } from "../lib/stores/useVectorStore";
 import Grid from "./Grid";
 import Axis from "./Axis";
 import Vector from "./Vector";
 import { useMatrixStore } from "../lib/stores/useMatrixStore";
+import * as THREE from "three";
 
 // Default vectors that will always be shown for testing
 const defaultVectors: VectorType[] = [
@@ -34,9 +35,62 @@ const defaultVectors: VectorType[] = [
   }
 ];
 
+// Helper function to calculate matrix rank
+const calculateMatrixRank = (matrix: number[][]): number => {
+  // Simple implementation to estimate rank
+  // For a more accurate version, we could use SVD or row reduction
+  
+  // Clone the matrix since we'll modify it
+  const m = matrix.map(row => [...row]);
+  const rows = m.length;
+  const cols = m[0].length;
+  
+  // Use Gaussian elimination to find rank
+  let rank = 0;
+  const rowsProcessed = new Array(rows).fill(false);
+  
+  for (let col = 0; col < cols; col++) {
+    let foundPivot = false;
+    
+    // Find pivot
+    for (let row = 0; row < rows; row++) {
+      if (!rowsProcessed[row] && Math.abs(m[row][col]) > 1e-10) {
+        rowsProcessed[row] = true;
+        rank++;
+        foundPivot = true;
+        
+        // Normalize the pivot row
+        const pivot = m[row][col];
+        for (let c = col; c < cols; c++) {
+          m[row][c] /= pivot;
+        }
+        
+        // Eliminate this column from all other rows
+        for (let r = 0; r < rows; r++) {
+          if (r !== row && Math.abs(m[r][col]) > 1e-10) {
+            const factor = m[r][col];
+            for (let c = col; c < cols; c++) {
+              m[r][c] -= factor * m[row][c];
+            }
+          }
+        }
+        
+        break;
+      }
+    }
+    
+    if (!foundPivot) {
+      // This column doesn't add to the rank
+      continue;
+    }
+  }
+  
+  return rank;
+};
+
 const VectorScene = () => {
   const { vectors } = useVectorStore();
-  const { showTransformed } = useMatrixStore();
+  const { matrix, showTransformed, showDimensionVisualization } = useMatrixStore();
   const { camera } = useThree();
   const [allVectors, setAllVectors] = useState<VectorType[]>([...defaultVectors]);
   

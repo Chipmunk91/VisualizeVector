@@ -12,10 +12,12 @@ export interface Matrix {
 interface MatrixStore {
   matrix: Matrix;
   showTransformed: boolean;
+  showDimensionVisualization: boolean;
   setMatrix: (matrix: Matrix) => void;
   updateMatrixValue: (row: number, col: number, value: number, expression?: string) => void;
   setDimension: (dimension: MatrixDimension) => void;
   toggleShowTransformed: () => void;
+  toggleDimensionVisualization: () => void;
   transposeMatrix: () => void;
 }
 
@@ -38,6 +40,7 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
     dimension: '3x3',
   },
   showTransformed: true,
+  showDimensionVisualization: false,
   
   setMatrix: (matrix) => {
     set({ matrix });
@@ -138,6 +141,14 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
       
       // Return new state
       return { showTransformed: newValue };
+    });
+  },
+  
+  toggleDimensionVisualization: () => {
+    set(state => {
+      const newValue = !state.showDimensionVisualization;
+      console.log("Show dimension visualization toggled to:", newValue);
+      return { showDimensionVisualization: newValue };
     });
   },
   
