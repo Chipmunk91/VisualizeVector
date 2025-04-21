@@ -6,39 +6,10 @@ import Axis from "./Axis";
 import Vector from "./Vector";
 import { useMatrixStore } from "../lib/stores/useMatrixStore";
 
-// Default vectors that will always be shown for testing
-const defaultVectors: VectorType[] = [
-  {
-    id: "default-x",
-    components: [3, 0, 0],
-    color: "#FF0000",
-    label: "X",
-    visible: true,
-    isTransformed: false
-  },
-  {
-    id: "default-y",
-    components: [0, 3, 0],
-    color: "#00FF00",
-    label: "Y",
-    visible: true,
-    isTransformed: false
-  },
-  {
-    id: "default-z",
-    components: [0, 0, 3],
-    color: "#0000FF",
-    label: "Z",
-    visible: true,
-    isTransformed: false
-  }
-];
-
 const VectorScene = () => {
   const { vectors } = useVectorStore();
   const { showTransformed } = useMatrixStore();
   const { camera } = useThree();
-  const [allVectors, setAllVectors] = useState<VectorType[]>([...defaultVectors]);
   
   // Default grid size
   const defaultSize = 10;
@@ -46,18 +17,16 @@ const VectorScene = () => {
   // Calculate the grid size based on vector coordinates
   const [gridSize, setGridSize] = useState(defaultSize);
   
-  // Combine user vectors with default vectors and calculate grid size
+  // Calculate grid size based on user vectors
   useEffect(() => {
     console.log("Rendering VectorScene with vectors:", vectors);
-    const combinedVectors = [...defaultVectors, ...vectors];
-    setAllVectors(combinedVectors);
     
     // Determine if we need a larger grid size based on vector coordinates
     let maxCoordinate = defaultSize;
     
     // Check all vectors including transformed ones
-    combinedVectors.forEach(vector => {
-      vector.components.forEach(component => {
+    vectors.forEach(vector => {
+      vector.components.forEach((component: number) => {
         const absComponent = Math.abs(component);
         if (absComponent > maxCoordinate) {
           // Round up to the nearest multiple of 10
@@ -85,7 +54,7 @@ const VectorScene = () => {
       camera.lookAt(0, 0, 0);
       cameraInitialized.current = true;
     }
-  }, []);
+  }, [camera]);
   
   return (
     <>
@@ -102,14 +71,6 @@ const VectorScene = () => {
         <sphereGeometry args={[0.2, 32, 32]} />
         <meshStandardMaterial color="#FFFFFF" />
       </mesh>
-      
-      {/* Debug vectors for testing */}
-      {defaultVectors.map((vector) => (
-        <Vector 
-          key={vector.id} 
-          vector={vector} 
-        />
-      ))}
       
       {/* Render user-added vectors */}
       {vectors.map((vector) => (
