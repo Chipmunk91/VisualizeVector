@@ -290,14 +290,50 @@ const VectorScene = () => {
         // Ensure we handle specifically the [[1,2],[3,4],[5,6]] case which maps to a plane in 3D
         console.log("Special case: 3x2 matrix (maps to a plane)");
         
+        // For a 3x2 matrix, the columns represent the basis vectors of the plane
+        // First, ensure the vectors are linearly independent
+        const col1 = colVec1.clone();
+        let col2 = colVec2.clone();
+        
+        // If col2 is dependent on col1, generate a perpendicular vector
+        if (Math.abs(col1.dot(col2) / (col1.length() * col2.length())) > 0.99) {
+          // They're almost parallel, so make a perpendicular vector
+          console.log("Columns are nearly dependent, creating orthogonal vector");
+          if (Math.abs(col1.x) < 0.9) {
+            col2 = new THREE.Vector3(1, 0, 0).sub(
+              col1.clone().multiplyScalar(col1.x / col1.lengthSq())
+            );
+          } else {
+            col2 = new THREE.Vector3(0, 1, 0).sub(
+              col1.clone().multiplyScalar(col1.y / col1.lengthSq())
+            );
+          }
+        } else {
+          // Make col2 orthogonal to col1 for better visualization
+          const col1UnitSq = col1.lengthSq();
+          if (col1UnitSq > 0.00001) {
+            col2.sub(col1.clone().multiplyScalar(col1.dot(col2) / col1UnitSq));
+          }
+        }
+        
+        // Normalize the vectors
+        col1.normalize();
+        col2.normalize();
+        
         // Calculate the normal vector to the plane (cross product of the columns)
-        const normal = new THREE.Vector3().crossVectors(colVec1, colVec2).normalize();
+        const normal = new THREE.Vector3().crossVectors(col1, col2).normalize();
+        
+        console.log("3x2 transformation space:", {
+          "basis1": col1,
+          "basis2": col2,
+          "normal": normal
+        });
         
         return {
-          rank1Direction: colVec1.clone().normalize(),
+          rank1Direction: col1,
           rank2Normal: normal,
-          rank2Basis1: colVec1.clone().normalize(),
-          rank2Basis2: colVec2.clone().normalize()
+          rank2Basis1: col1,
+          rank2Basis2: col2
         };
       }
       
@@ -493,20 +529,65 @@ const VectorScene = () => {
       
       return (
         <group quaternion={planeQuaternion.toArray()}>
+          {/* Main plane */}
           <mesh>
             <planeGeometry args={[size * 2, size * 2]} />
             <meshStandardMaterial color="#00BFFF" transparent opacity={0.2} side={THREE.DoubleSide} />
           </mesh>
+          
+          {/* Corner indicators to make plane more visible */}
+          <mesh position={[size, size, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial color="#00BFFF" transparent opacity={0.6} />
+          </mesh>
+          <mesh position={[-size, size, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial color="#00BFFF" transparent opacity={0.6} />
+          </mesh>
+          <mesh position={[size, -size, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial color="#00BFFF" transparent opacity={0.6} />
+          </mesh>
+          <mesh position={[-size, -size, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial color="#00BFFF" transparent opacity={0.6} />
+          </mesh>
+          
+          {/* Grid lines to indicate plane orientation */}
+          <lineSegments>
+            <edgesGeometry args={[new THREE.PlaneGeometry(size * 2, size * 2, 4, 4)]} />
+            <lineBasicMaterial color="#00BFFF" transparent opacity={0.6} />
+          </lineSegments>
         </group>
       );
     } else if (matrixRank === 3) {
       // Rank 3: Space visualization (3D)
-      // Using very low opacity to ensure vectors remain clearly visible
+      // Using wireframe material to ensure vectors remain fully visible
       return (
-        <mesh>
-          <boxGeometry args={[size * 2, size * 2, size * 2]} />
-          <meshStandardMaterial color="#FF6347" transparent opacity={0.05} />
-        </mesh>
+        <>
+          {/* Wireframe box to show boundaries */}
+          <mesh>
+            <boxGeometry args={[size * 2, size * 2, size * 2]} />
+            <meshBasicMaterial 
+              color="#FF6347" 
+              wireframe={true}
+              transparent={true}
+              opacity={0.2} 
+            />
+          </mesh>
+          
+          {/* Faces with extreme transparency */}
+          <mesh>
+            <boxGeometry args={[size * 2, size * 2, size * 2]} />
+            <meshBasicMaterial 
+              color="#FF6347" 
+              transparent={true}
+              opacity={0.02} 
+              side={THREE.DoubleSide}
+              depthWrite={false} // This allows objects inside to be visible
+            />
+          </mesh>
+        </>
       );
     }
     
