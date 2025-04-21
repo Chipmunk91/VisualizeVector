@@ -62,7 +62,7 @@ const VectorInput = () => {
   const originalVectors = vectors.filter(v => !v.isTransformed);
 
   return (
-    <div className="p-4 h-full flex flex-col space-y-4 overflow-y-auto">
+    <div className="p-4 h-full flex flex-col space-y-4">
       <h2 className="text-xl font-bold">Vector Controls</h2>
       
       {/* Add new vector */}
@@ -342,15 +342,17 @@ const VectorInput = () => {
         </CardContent>
       </Card>
       
-      {/* Vector Analysis */}
-      <VectorAnalysis />
+      {/* Vector Analysis - Keep this outside any scrollable container */}
+      <div className="flex-none">
+        <VectorAnalysis />
+      </div>
       
-      {/* Vector list */}
+      {/* Vector list - Scrollable with fixed height */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Vector List</CardTitle>
         </CardHeader>
-        <CardContent className="max-h-[400px] overflow-y-auto">
+        <CardContent className="max-h-[300px] overflow-y-auto">
           {originalVectors.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
               No vectors added yet. Add a vector to get started.
