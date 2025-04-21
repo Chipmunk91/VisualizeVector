@@ -662,7 +662,9 @@ const VectorScene = () => {
       
       {/* Render user-added vectors */}
       {vectors.map((vector) => (
-        vector.visible && (
+        // Don't render transformed vectors if the matrix is an identity matrix
+        vector.visible && 
+        (!vector.isTransformed || !isIdentity) && (
           <Vector 
             key={vector.id} 
             vector={vector} 

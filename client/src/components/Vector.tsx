@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Vector as VectorType } from "../lib/stores/useVectorStore";
 import { useVectorStore } from "../lib/stores/useVectorStore";
+import { useMatrixStore, isIdentityMatrix } from "../lib/stores/useMatrixStore";
 import { useThree, useFrame, ThreeEvent } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 
@@ -331,8 +332,7 @@ const Vector = ({ vector }: VectorProps) => {
             // For transformed vectors:
             // 1. Don't show coordinates if vector is the same as the original
             // 2. Check if matrix is an identity matrix (this will be used in the next condition)
-            const { isIdentityMatrix } = require('../lib/stores/useMatrixStore');
-            const { matrix } = useMatrixStore.getState();
+            const { matrix } = useMatrixStore();
             const isIdentity = isIdentityMatrix(matrix.values);
             
             // Show coordinates only if:
