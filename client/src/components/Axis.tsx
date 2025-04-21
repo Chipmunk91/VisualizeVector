@@ -31,8 +31,8 @@ const Axis = ({ length = 10 }: AxisProps) => {
         <meshStandardMaterial color="green" />
       </mesh>
       
-      {/* Z Axis (Blue) - Thick line - Now vertical */}
-      <mesh position={[0, 0, axisLength/2]}>
+      {/* Z Axis (Blue) - Thick line - Properly vertical */}
+      <mesh position={[0, 0, axisLength/2]} rotation={[Math.PI/2, 0, 0]}>
         <cylinderGeometry args={[0.05, 0.05, axisLength, 8]} />
         <meshStandardMaterial color="blue" />
       </mesh>
