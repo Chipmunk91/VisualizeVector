@@ -364,8 +364,8 @@ const Vector = ({ vector }: VectorProps) => {
                   outlineOpacity={opacity * 0.7}
                   quaternion={camera.quaternion}
                 >
-                  {/* Floor values to integers as requested */}
-                  {`(${components.map(c => Math.floor(c)).join(', ')})`}
+                  {/* Format values to 2 decimal places */}
+                  {`(${components.map(c => c.toFixed(2)).join(', ')})`}
                 </Text>
               );
             }
