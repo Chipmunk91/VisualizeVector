@@ -145,8 +145,21 @@ const VectorScene = () => {
   const matrixRank = useMemo(() => {
     if (!showDimensionVisualization) return 0;
     
+    // Handle non-square matrices
+    const [rows, cols] = matrix.dimension.split('x').map(Number);
+    
+    // For non-square matrices, the rank is at most min(rows, cols)
+    // and we need a specific approach
+    if (rows !== cols) {
+      console.log(`Non-square matrix detected: ${rows}x${cols}`);
+      
+      // A 3x2 matrix can at most have rank 2 (maps to a plane)
+      // A 2x3 matrix can at most have rank 2 (maps from a plane)
+      return Math.min(calculateMatrixRank(matrix.values), Math.min(rows, cols));
+    }
+    
     return calculateMatrixRank(matrix.values);
-  }, [matrix.values, showDimensionVisualization]);
+  }, [matrix.values, matrix.dimension, showDimensionVisualization]);
   
   // Determine transformation characteristics for visualization
   const getTransformationSpace = useMemo(() => {
@@ -164,14 +177,130 @@ const VectorScene = () => {
     const m = matrix.values;
     console.log("Matrix for transformation space:", m);
     
-    // For a 3x3 matrix
-    if (m.length === 3 && m[0].length === 3) {
+    // Get matrix dimensions
+    const [rows, cols] = matrix.dimension.split('x').map(Number);
+    console.log(`Processing matrix with dimensions ${rows}x${cols}`);
+    
+    // For 3x3 matrices and non-square matrices
+    if (m.length > 0 && m[0].length > 0) {
       // Create the column vectors of the matrix (these define the transformation)
-      const colVec1 = new THREE.Vector3(m[0][0], m[1][0], m[2][0]);
-      const colVec2 = new THREE.Vector3(m[0][1], m[1][1], m[2][1]);
-      const colVec3 = new THREE.Vector3(m[0][2], m[1][2], m[2][2]);
+      // Handle different matrix dimensions
+      let colVec1, colVec2, colVec3;
       
-      // For rank 1 (line): The column with largest magnitude determines the direction
+      // Fill column vectors based on matrix dimensions, with zeros for missing values
+      if (rows === 3) {
+        colVec1 = new THREE.Vector3(
+          cols > 0 ? m[0][0] : 0, 
+          cols > 0 ? m[1][0] : 0, 
+          cols > 0 ? m[2][0] : 0
+        );
+        colVec2 = new THREE.Vector3(
+          cols > 1 ? m[0][1] : 0, 
+          cols > 1 ? m[1][1] : 0, 
+          cols > 1 ? m[2][1] : 0
+        );
+        colVec3 = new THREE.Vector3(
+          cols > 2 ? m[0][2] : 0, 
+          cols > 2 ? m[1][2] : 0, 
+          cols > 2 ? m[2][2] : 0
+        );
+      } else if (rows === 2) {
+        // For 2-row matrices, we use z=0 for the third component
+        colVec1 = new THREE.Vector3(
+          cols > 0 ? m[0][0] : 0, 
+          cols > 0 ? m[1][0] : 0, 
+          0
+        );
+        colVec2 = new THREE.Vector3(
+          cols > 1 ? m[0][1] : 0, 
+          cols > 1 ? m[1][1] : 0, 
+          0
+        );
+        colVec3 = new THREE.Vector3(
+          cols > 2 ? m[0][2] : 0, 
+          cols > 2 ? m[1][2] : 0, 
+          0
+        );
+      } else {
+        // Default case
+        colVec1 = new THREE.Vector3(
+          cols > 0 && m[0] ? m[0][0] : 0, 
+          0, 
+          0
+        );
+        colVec2 = new THREE.Vector3(
+          cols > 1 && m[0] ? m[0][1] : 0, 
+          0, 
+          0
+        );
+        colVec3 = new THREE.Vector3(
+          cols > 2 && m[0] ? m[0][2] : 0, 
+          0, 
+          0
+        );
+      }
+      
+      console.log("Column vectors:", { colVec1, colVec2, colVec3 });
+      
+      // For rank 1 matrices with specific patterns like [[1,0,0],[0,0,0],[0,0,0]], 
+      // we need direct checking rather than just magnitudes
+      
+      // Special case check for specific axes-aligned matrices
+      // Only apply these checks for 3x3 matrices
+      if (rows === 3 && cols === 3) {
+        if (m[0][0] !== 0 && m[1][0] === 0 && m[2][0] === 0 && 
+            m[0][1] === 0 && m[1][1] === 0 && m[2][1] === 0 && 
+            m[0][2] === 0 && m[1][2] === 0 && m[2][2] === 0) {
+          // Case for X-axis aligned transformation [[x,0,0],[0,0,0],[0,0,0]]
+          console.log("Special case: X-axis aligned matrix");
+          return {
+            rank1Direction: new THREE.Vector3(1, 0, 0),
+            rank2Normal: new THREE.Vector3(0, 0, 1),
+            rank2Basis1: new THREE.Vector3(1, 0, 0),
+            rank2Basis2: new THREE.Vector3(0, 1, 0)
+          };
+        } else if (m[0][0] === 0 && m[1][0] !== 0 && m[2][0] === 0 && 
+                  m[0][1] === 0 && m[1][1] === 0 && m[2][1] === 0 && 
+                  m[0][2] === 0 && m[1][2] === 0 && m[2][2] === 0) {
+          // Case for Y-axis aligned transformation [[0,0,0],[y,0,0],[0,0,0]]
+          console.log("Special case: Y-axis aligned matrix");
+          return {
+            rank1Direction: new THREE.Vector3(0, 1, 0),
+            rank2Normal: new THREE.Vector3(0, 0, 1),
+            rank2Basis1: new THREE.Vector3(0, 1, 0),
+            rank2Basis2: new THREE.Vector3(1, 0, 0)
+          };
+        } else if (m[0][0] === 0 && m[1][0] === 0 && m[2][0] !== 0 && 
+                  m[0][1] === 0 && m[1][1] === 0 && m[2][1] === 0 && 
+                  m[0][2] === 0 && m[1][2] === 0 && m[2][2] === 0) {
+          // Case for Z-axis aligned transformation [[0,0,0],[0,0,0],[z,0,0]]
+          console.log("Special case: Z-axis aligned matrix");
+          return {
+            rank1Direction: new THREE.Vector3(0, 0, 1),
+            rank2Normal: new THREE.Vector3(1, 0, 0),
+            rank2Basis1: new THREE.Vector3(0, 0, 1),
+            rank2Basis2: new THREE.Vector3(0, 1, 0)
+          };
+        }
+      }
+      
+      // Special case for 3x2 (matrix-vector) product which should map to a plane
+      if (rows === 3 && cols === 2) {
+        // Ensure we handle specifically the [[1,2],[3,4],[5,6]] case which maps to a plane in 3D
+        console.log("Special case: 3x2 matrix (maps to a plane)");
+        
+        // Calculate the normal vector to the plane (cross product of the columns)
+        const normal = new THREE.Vector3().crossVectors(colVec1, colVec2).normalize();
+        
+        return {
+          rank1Direction: colVec1.clone().normalize(),
+          rank2Normal: normal,
+          rank2Basis1: colVec1.clone().normalize(),
+          rank2Basis2: colVec2.clone().normalize()
+        };
+      }
+      
+      // For other cases, use the general approach with magnitudes
       const magnitudes = [
         { vec: colVec1, mag: colVec1.length() },
         { vec: colVec2, mag: colVec2.length() },
@@ -277,7 +406,7 @@ const VectorScene = () => {
       rank2Basis1: new THREE.Vector3(1, 0, 0),
       rank2Basis2: new THREE.Vector3(0, 1, 0)
     };
-  }, [matrix.values, showDimensionVisualization]);
+  }, [matrix.values, matrix.dimension, showDimensionVisualization]);
   
   // Create visualization elements based on rank
   const dimensionVisualization = useMemo(() => {
