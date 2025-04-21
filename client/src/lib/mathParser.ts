@@ -19,12 +19,24 @@ export function evaluateExpression(expression: string): number {
   }
   
   try {
+    // Handle specific common math patterns
+    // Check for power pattern like 2^3.4 or 2^(3.4)
+    const powerPattern = /(\d+(?:\.\d+)?)\s*\^\s*(?:\(?\s*(-?\d+(?:\.\d+)?)\s*\)?)/;
+    const powerMatch = expression.match(powerPattern);
+    
+    if (powerMatch) {
+      const base = parseFloat(powerMatch[1]);
+      const exponent = parseFloat(powerMatch[2]);
+      console.log(`Evaluating power expression: ${base}^${exponent}`);
+      return Math.pow(base, exponent);
+    }
+    
     // Replace ^ with ** for exponentiation (mathjs uses **)
     const processedExpression = expression.replace(/\^/g, '**');
     
     console.log(`Evaluating expression: "${expression}" (processed: "${processedExpression}")`);
     
-    // Evaluate the expression
+    // Evaluate the expression using mathjs
     const result = math.evaluate(processedExpression);
     
     console.log(`Expression result:`, result);
@@ -34,7 +46,22 @@ export function evaluateExpression(expression: string): number {
   } catch (error) {
     console.log(`Error evaluating expression "${expression}":`, error);
     
-    // Try to extract just the numeric part from the expression
+    try {
+      // Try JavaScript's eval as a fallback for simple expressions
+      // Replace ^ with ** for JavaScript syntax
+      const jsExpression = expression.replace(/\^/g, '**');
+      
+      // Only evaluate if it contains valid math operations and no suspicious code
+      if (/^[0-9\s\.\+\-\*\/\(\)\^]+$/.test(jsExpression)) {
+        const result = eval(jsExpression);
+        console.log(`Evaluated with JS eval:`, result);
+        return result;
+      }
+    } catch (jsError) {
+      console.log("JS eval fallback failed:", jsError);
+    }
+    
+    // Try to extract just the numeric part from the expression as last resort
     const numericMatch = expression.match(/-?\d+(\.\d+)?/);
     if (numericMatch) {
       console.log(`Falling back to extracted numeric part: ${numericMatch[0]}`);
