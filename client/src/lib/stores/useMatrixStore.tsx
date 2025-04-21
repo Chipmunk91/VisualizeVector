@@ -35,6 +35,32 @@ const createIdentityMatrix = (dimension: MatrixDimension): number[][] => {
   );
 };
 
+// Function to check if a matrix is an identity matrix
+export const isIdentityMatrix = (matrix: number[][]): boolean => {
+  const rows = matrix.length;
+  if (rows === 0) return false;
+  
+  const cols = matrix[0].length;
+  
+  // Must be square for identity
+  if (rows !== cols) return false;
+  
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      // Diagonal elements should be 1
+      if (i === j && Math.abs(matrix[i][j] - 1) > 0.001) {
+        return false;
+      }
+      // Off-diagonal elements should be 0
+      if (i !== j && Math.abs(matrix[i][j]) > 0.001) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
+};
+
 export const useMatrixStore = create<MatrixStore>((set) => ({
   matrix: {
     values: createIdentityMatrix('3x3'),

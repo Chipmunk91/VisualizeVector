@@ -296,8 +296,14 @@ const Vector = ({ vector }: VectorProps) => {
       {/* Labels for all vectors */}
       {vector.visible && (
         <>
+          {/* Vector name label with significantly increased distance */}
           <Text
-            position={[end.x, end.y + 0.7, end.z]} // Moved further up
+            position={[
+              // Position label further away from the vector end
+              end.x + (end.x * 0.2), // Shift label a bit in the X direction (20% of vector length)
+              end.y + 1.2, // Significantly moved up from the vector tip
+              end.z + (end.z * 0.2) // Shift label a bit in the Z direction (20% of vector length)
+            ]}
             fontSize={0.4}
             color={vector.color}
             anchorX="center"
@@ -331,7 +337,11 @@ const Vector = ({ vector }: VectorProps) => {
             if (showCoordinates) {
               return (
                 <Text
-                  position={[end.x, end.y + 0.3, end.z]} // Moved further from vector name
+                  position={[
+                    end.x + (end.x * 0.1), // Coordinates offset slightly from vector end (10% of vector length)
+                    end.y + 0.6, // Closer to the vector tip than the label
+                    end.z + (end.z * 0.1) // Minor Z offset to match the X offset
+                  ]}
                   fontSize={0.25}
                   color={vector.color}
                   anchorX="center"
