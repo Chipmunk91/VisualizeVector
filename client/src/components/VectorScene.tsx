@@ -493,64 +493,64 @@ const VectorScene = () => {
     // Get transformation space info
     const transformSpace = getTransformationSpace;
     
-    // Create quaternion to rotate to align with principal direction
-    const quaternion = new THREE.Quaternion();
-    if (matrixRank === 1) {
-      // For rank 1, align cylinder with principal direction
-      console.log("Aligning rank 1 visualization with direction:", 
-                 JSON.stringify(transformSpace.rank1Direction));
-      
-      // Cylinders by default are oriented along the Y axis in Three.js, not Z
-      // So we need to align from Y to our target direction
-      const startVec = new THREE.Vector3(0, 1, 0); // Default cylinder orientation (Y-axis)
-      
-      // Special case for axis-aligned matrices
-      if (Math.abs(transformSpace.rank1Direction.x) > 0.9 && 
-          Math.abs(transformSpace.rank1Direction.y) < 0.1 && 
-          Math.abs(transformSpace.rank1Direction.z) < 0.1) {
-        // X-axis case, use direct orientation
-        console.log("Using direct X-axis orientation");
-        // We'll rotate 90 degrees around Z to go from Y to X
-        quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), -Math.PI/2);
-      } else if (Math.abs(transformSpace.rank1Direction.y) > 0.9 && 
-                Math.abs(transformSpace.rank1Direction.x) < 0.1 && 
-                Math.abs(transformSpace.rank1Direction.z) < 0.1) {
-        // Y-axis case, no rotation needed
-        console.log("Using direct Y-axis orientation");
-        quaternion.identity();
-      } else if (Math.abs(transformSpace.rank1Direction.z) > 0.9 && 
-                Math.abs(transformSpace.rank1Direction.x) < 0.1 && 
-                Math.abs(transformSpace.rank1Direction.y) < 0.1) {
-        // Z-axis case, use direct orientation
-        console.log("Using direct Z-axis orientation");
-        // We'll rotate 90 degrees around X to go from Y to Z
-        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
-      } else {
-        // General case
-        quaternion.setFromUnitVectors(startVec, transformSpace.rank1Direction);
-      }
-    }
+    // We'll only need a quaternion for rank 2 plane visualization
+    // For rank 1, we now use direct line drawing
     
     if (matrixRank === 1) {
       // Rank 1: Line visualization (1D)
+      // Instead of using a cylinder, use a direct LineSegments object for stability
+      
+      // Get the direction vector
+      const direction = transformSpace.rank1Direction.clone().normalize();
+      
+      // Calculate midpoint (center of our line)
+      const midPoint = new THREE.Vector3(0, 0, 0);
+      
+      // Calculate start and end points for visual elements
+      const startPoint = direction.clone().multiplyScalar(-size);
+      const endPoint = direction.clone().multiplyScalar(size);
+      
+      console.log("Creating line visualization along direction:", direction);
+      
+      // Compute rotation to align with the direction vector
+      // Start with a vector pointing in the Y direction (0,1,0)
+      const defaultUp = new THREE.Vector3(0, 1, 0);
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromUnitVectors(defaultUp, direction);
+      
       return (
-        <group quaternion={quaternion.toArray()}>
-          {/* Show cylinder along the direction */}
-          <mesh>
-            <cylinderGeometry args={[0.1, 0.1, size * 2, 16]} />
-            <meshStandardMaterial color="#7F00FF" transparent opacity={0.3} />
+        <>
+          {/* Draw a line using a thin, stretched box, rotated to match direction */}
+          <mesh position={midPoint.toArray()} quaternion={quaternion.toArray()}>
+            <boxGeometry args={[0.05, size * 2, 0.05]} />
+            <meshStandardMaterial 
+              color="#7F00FF" 
+              transparent 
+              opacity={0.5}
+              emissive="#7F00FF"
+              emissiveIntensity={0.3}
+            />
           </mesh>
           
           {/* Add small spheres at each end to make direction more visible */}
-          <mesh position={[0, size, 0]}>
+          <mesh position={startPoint.toArray()}>
             <sphereGeometry args={[0.15, 16, 16]} />
-            <meshStandardMaterial color="#7F00FF" transparent opacity={0.5} />
+            <meshStandardMaterial color="#7F00FF" transparent opacity={0.7} />
           </mesh>
-          <mesh position={[0, -size, 0]}>
+          <mesh position={endPoint.toArray()}>
             <sphereGeometry args={[0.15, 16, 16]} />
-            <meshStandardMaterial color="#7F00FF" transparent opacity={0.5} />
+            <meshStandardMaterial color="#7F00FF" transparent opacity={0.7} />
           </mesh>
-        </group>
+          
+          {/* Add an arrow head at the end */}
+          <mesh 
+            position={endPoint.toArray()}
+            quaternion={quaternion.toArray()}
+          >
+            <coneGeometry args={[0.2, 0.4, 16]} />
+            <meshStandardMaterial color="#7F00FF" transparent opacity={0.7} />
+          </mesh>
+        </>
       );
     } else if (matrixRank === 2) {
       // Rank 2: Plane visualization (2D)
