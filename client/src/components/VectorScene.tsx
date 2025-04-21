@@ -501,37 +501,12 @@ const VectorScene = () => {
       );
     } else if (matrixRank === 3) {
       // Rank 3: Space visualization (3D)
-      // Using wireframe instead of solid for better visibility
+      // Using very low opacity to ensure vectors remain clearly visible
       return (
-        <group>
-          {/* Main box with very low opacity */}
-          <mesh>
-            <boxGeometry args={[size * 2, size * 2, size * 2]} />
-            <meshStandardMaterial 
-              color="#FF6347" 
-              transparent={true} 
-              opacity={0.01} 
-              side={THREE.DoubleSide} 
-              depthWrite={false}  // Don't write to depth buffer (allows things inside to be visible)
-              depthTest={false}   // Don't use depth testing (prevents hiding other objects)
-            />
-          </mesh>
-          
-          {/* Wireframe for better visibility */}
-          <mesh>
-            <boxGeometry args={[size * 2, size * 2, size * 2]} />
-            <meshStandardMaterial 
-              color="#FF6347" 
-              wireframe={true} 
-              transparent={true} 
-              opacity={0.2}
-              depthWrite={false}  // Don't write to depth buffer
-              depthTest={false}   // Don't use depth testing
-            />
-          </mesh>
-          
-          {/* No border lines as requested - removed for better visualization */}
-        </group>
+        <mesh>
+          <boxGeometry args={[size * 2, size * 2, size * 2]} />
+          <meshStandardMaterial color="#FF6347" transparent opacity={0.05} />
+        </mesh>
       );
     }
     
