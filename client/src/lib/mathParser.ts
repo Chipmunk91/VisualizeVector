@@ -22,8 +22,12 @@ export function evaluateExpression(expression: string): number {
     // Replace ^ with ** for exponentiation (mathjs uses **)
     const processedExpression = expression.replace(/\^/g, '**');
     
+    console.log(`Evaluating expression: "${expression}" (processed: "${processedExpression}")`);
+    
     // Evaluate the expression
     const result = math.evaluate(processedExpression);
+    
+    console.log(`Expression result:`, result);
     
     // Convert to number if it's not already
     return typeof result === 'number' ? result : Number(result);
@@ -33,6 +37,7 @@ export function evaluateExpression(expression: string): number {
     // Try to extract just the numeric part from the expression
     const numericMatch = expression.match(/-?\d+(\.\d+)?/);
     if (numericMatch) {
+      console.log(`Falling back to extracted numeric part: ${numericMatch[0]}`);
       return parseFloat(numericMatch[0]);
     }
     
