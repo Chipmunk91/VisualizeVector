@@ -562,31 +562,29 @@ const VectorScene = () => {
       );
     } else if (matrixRank === 3) {
       // Rank 3: Space visualization (3D)
-      // Using wireframe material to ensure vectors remain fully visible
+      // Using just the edges of a cube to show the space without obscuring objects inside
       return (
         <>
-          {/* Wireframe box to show boundaries */}
-          <mesh>
-            <boxGeometry args={[size * 2, size * 2, size * 2]} />
-            <meshBasicMaterial 
-              color="#FF6347" 
-              wireframe={true}
-              transparent={true}
-              opacity={0.2} 
-            />
-          </mesh>
+          {/* Edges-only box */}
+          <lineSegments>
+            <edgesGeometry args={[new THREE.BoxGeometry(size * 2, size * 2, size * 2)]} />
+            <lineBasicMaterial color="#FF6347" transparent opacity={0.3} />
+          </lineSegments>
           
-          {/* Faces with extreme transparency */}
-          <mesh>
-            <boxGeometry args={[size * 2, size * 2, size * 2]} />
-            <meshBasicMaterial 
-              color="#FF6347" 
-              transparent={true}
-              opacity={0.02} 
-              side={THREE.DoubleSide}
-              depthWrite={false} // This allows objects inside to be visible
-            />
-          </mesh>
+          {/* Vertices as small spheres at corners (8) */}
+          {/* Using a loop to create spheres at the 8 corners of the cube */}
+          {[
+            [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
+            [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]
+          ].map((pos, index) => (
+            <mesh 
+              key={`corner-${index}`}
+              position={[pos[0] * size, pos[1] * size, pos[2] * size]}
+            >
+              <sphereGeometry args={[0.15, 16, 16]} />
+              <meshBasicMaterial color="#FF6347" transparent opacity={0.5} />
+            </mesh>
+          ))}
         </>
       );
     }
