@@ -73,6 +73,7 @@ const Vector = ({ vector }: VectorProps) => {
   
   // Prevent dragging for transformed vectors and default axis vectors
   const isDefaultAxis = vector.id === "default-x" || vector.id === "default-y" || vector.id === "default-z";
+  const isUnitVector = isDefaultAxis; // Unit vectors are default i-j-k hats
   const isDraggable = !isTransformed && !isDefaultAxis;
   
   // Use a direct frameloop to handle dragging
@@ -296,7 +297,7 @@ const Vector = ({ vector }: VectorProps) => {
       {vector.visible && (
         <>
           <Text
-            position={[end.x, end.y + 0.5, end.z]}
+            position={[end.x, end.y + 0.7, end.z]} // Moved further up
             fontSize={0.4}
             color={vector.color}
             anchorX="center"
@@ -311,10 +312,16 @@ const Vector = ({ vector }: VectorProps) => {
           </Text>
           
           {/* 
-            Show coordinates for original vectors, and for transformed vectors
-            only if they are different from the original vector
+            Show coordinates for original vectors, and for transformed vectors,
+            only if they are different from the original vector.
+            Never show coordinates for unit vectors (i-j-k hats).
           */}
           {(() => {
+            // Don't display coordinates for unit vectors (default x-y-z axes)
+            if (isUnitVector) {
+              return null;
+            }
+            
             // Check if this is a transformed vector with the same components as the original
             const showCoordinates = !isTransformed || !originalVector || !components.every(
               (val, idx) => Math.abs(val - originalVector.components[idx]) < 0.001
@@ -324,7 +331,7 @@ const Vector = ({ vector }: VectorProps) => {
             if (showCoordinates) {
               return (
                 <Text
-                  position={[end.x, end.y + 0.2, end.z]}
+                  position={[end.x, end.y + 0.3, end.z]} // Moved further from vector name
                   fontSize={0.25}
                   color={vector.color}
                   anchorX="center"
@@ -335,7 +342,8 @@ const Vector = ({ vector }: VectorProps) => {
                   outlineOpacity={opacity * 0.7}
                   quaternion={camera.quaternion}
                 >
-                  {`(${components.map(c => c.toFixed(1)).join(', ')})`}
+                  {/* Floor values to integers as requested */}
+                  {`(${components.map(c => Math.floor(c)).join(', ')})`}
                 </Text>
               );
             }
