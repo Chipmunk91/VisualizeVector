@@ -530,15 +530,7 @@ const VectorScene = () => {
             />
           </mesh>
           
-          {/* Box edges for clarity */}
-          <lineSegments renderOrder={1000}> {/* Higher render order to ensure it's drawn on top */}
-            <edgesGeometry args={[new THREE.BoxGeometry(size * 2, size * 2, size * 2)]} />
-            <lineBasicMaterial 
-              color="#FF6347" 
-              transparent={false}
-              depthTest={false}
-            />
-          </lineSegments>
+          {/* No border lines as requested - removed for better visualization */}
         </group>
       );
     }
