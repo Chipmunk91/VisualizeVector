@@ -125,7 +125,7 @@ const VectorScene = () => {
       console.log("Setting new grid size:", maxCoordinate);
       setGridSize(maxCoordinate);
     }
-  }, [vectors, gridSize, showTransformed]);
+  }, [vectors, gridSize, showTransformed, showDimensionVisualization]);
   
   // Camera setup - ONLY runs once when the component mounts
   const cameraInitialized = useRef(false);
@@ -141,6 +141,106 @@ const VectorScene = () => {
     }
   }, []);
   
+  // Calculate matrix rank and generate visualization components for dimension
+  const matrixRank = useMemo(() => {
+    if (!showDimensionVisualization) return 0;
+    
+    return calculateMatrixRank(matrix.values);
+  }, [matrix.values, showDimensionVisualization]);
+  
+  // Determine principal direction of the matrix (simplified)
+  const getPrincipalDirection = useMemo(() => {
+    // Only compute if visualization is enabled
+    if (!showDimensionVisualization) return new THREE.Vector3(1, 0, 0);
+    
+    // Get matrix values
+    const m = matrix.values;
+    
+    // For a 3x3 matrix
+    if (m.length === 3 && m[0].length === 3) {
+      // For rank 1 matrices, find the principal direction (simplified approach)
+      // We're looking for the direction with the largest component after transformation
+      
+      // Test vectors
+      const testVectors = [
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 1)
+      ];
+      
+      // Transform each vector with the matrix
+      const transformedVectors = testVectors.map(v => {
+        const result = new THREE.Vector3();
+        // Apply matrix transformation
+        result.x = m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z;
+        result.y = m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z;
+        result.z = m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z;
+        return { vector: v, transformed: result, magnitude: result.length() };
+      });
+      
+      // Find the vector that results in the largest magnitude
+      transformedVectors.sort((a, b) => b.magnitude - a.magnitude);
+      
+      // Return the principal direction (the input vector that resulted in the largest output)
+      return transformedVectors[0].vector;
+    }
+    
+    // Default fallback
+    return new THREE.Vector3(1, 0, 0);
+  }, [matrix.values, showDimensionVisualization]);
+  
+  // Create visualization elements based on rank
+  const dimensionVisualization = useMemo(() => {
+    if (!showDimensionVisualization) return null;
+    
+    console.log(`Visualizing matrix with rank ${matrixRank}`);
+    
+    // Size of visualization (adjusted to match grid)
+    const size = 5;
+    
+    // Principal direction for alignment
+    const principalDir = getPrincipalDirection;
+    
+    // Create quaternion to rotate to align with principal direction
+    const quaternion = new THREE.Quaternion();
+    if (matrixRank === 1) {
+      // For rank 1, align cylinder with principal direction
+      const startVec = new THREE.Vector3(0, 0, 1); // Default cylinder orientation
+      quaternion.setFromUnitVectors(startVec, principalDir.normalize());
+    }
+    
+    if (matrixRank === 1) {
+      // Rank 1: Line visualization (1D)
+      return (
+        <group quaternion={quaternion.toArray()}>
+          <mesh>
+            <cylinderGeometry args={[0.1, 0.1, size * 2, 16]} />
+            <meshStandardMaterial color="#7F00FF" transparent opacity={0.3} />
+          </mesh>
+        </group>
+      );
+    } else if (matrixRank === 2) {
+      // Rank 2: Plane visualization (2D)
+      // For simplicity, we'll just use XY plane for now
+      return (
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[size * 2, size * 2]} />
+          <meshStandardMaterial color="#00BFFF" transparent opacity={0.2} side={THREE.DoubleSide} />
+        </mesh>
+      );
+    } else if (matrixRank === 3) {
+      // Rank 3: Space visualization (3D)
+      return (
+        <mesh>
+          <boxGeometry args={[size * 2, size * 2, size * 2]} />
+          <meshStandardMaterial color="#FF6347" transparent opacity={0.1} />
+        </mesh>
+      );
+    }
+    
+    return null;
+  }, [matrixRank, showDimensionVisualization, getPrincipalDirection]);
+  
   return (
     <>
       {/* Lighting */}
@@ -150,6 +250,9 @@ const VectorScene = () => {
       {/* Coordinate system - adjust grid size dynamically but keep axis at 10 units */}
       <Grid size={gridSize} divisions={gridSize} />
       <Axis length={10} />
+      
+      {/* Matrix dimension visualization */}
+      {dimensionVisualization}
       
       {/* Debug sphere at origin */}
       <mesh position={[0, 0, 0]}>
