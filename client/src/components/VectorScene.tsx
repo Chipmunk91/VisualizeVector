@@ -253,11 +253,12 @@ const VectorScene = () => {
             m[0][2] === 0 && m[1][2] === 0 && m[2][2] === 0) {
           // Case for X-axis aligned transformation [[x,0,0],[0,0,0],[0,0,0]]
           console.log("Special case: X-axis aligned matrix");
+          // Force to exact axes for visualization purposes
           return {
-            rank1Direction: new THREE.Vector3(1, 0, 0),
-            rank2Normal: new THREE.Vector3(0, 0, 1),
-            rank2Basis1: new THREE.Vector3(1, 0, 0),
-            rank2Basis2: new THREE.Vector3(0, 1, 0)
+            rank1Direction: new THREE.Vector3(1, 0, 0).normalize(),
+            rank2Normal: new THREE.Vector3(0, 0, 1).normalize(),
+            rank2Basis1: new THREE.Vector3(1, 0, 0).normalize(),
+            rank2Basis2: new THREE.Vector3(0, 1, 0).normalize()
           };
         } else if (m[0][0] === 0 && m[1][0] !== 0 && m[2][0] === 0 && 
                   m[0][1] === 0 && m[1][1] === 0 && m[2][1] === 0 && 
@@ -424,17 +425,58 @@ const VectorScene = () => {
     const quaternion = new THREE.Quaternion();
     if (matrixRank === 1) {
       // For rank 1, align cylinder with principal direction
-      const startVec = new THREE.Vector3(0, 0, 1); // Default cylinder orientation
-      quaternion.setFromUnitVectors(startVec, transformSpace.rank1Direction);
+      console.log("Aligning rank 1 visualization with direction:", 
+                 JSON.stringify(transformSpace.rank1Direction));
+      
+      // Cylinders by default are oriented along the Y axis in Three.js, not Z
+      // So we need to align from Y to our target direction
+      const startVec = new THREE.Vector3(0, 1, 0); // Default cylinder orientation (Y-axis)
+      
+      // Special case for axis-aligned matrices
+      if (Math.abs(transformSpace.rank1Direction.x) > 0.9 && 
+          Math.abs(transformSpace.rank1Direction.y) < 0.1 && 
+          Math.abs(transformSpace.rank1Direction.z) < 0.1) {
+        // X-axis case, use direct orientation
+        console.log("Using direct X-axis orientation");
+        // We'll rotate 90 degrees around Z to go from Y to X
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), -Math.PI/2);
+      } else if (Math.abs(transformSpace.rank1Direction.y) > 0.9 && 
+                Math.abs(transformSpace.rank1Direction.x) < 0.1 && 
+                Math.abs(transformSpace.rank1Direction.z) < 0.1) {
+        // Y-axis case, no rotation needed
+        console.log("Using direct Y-axis orientation");
+        quaternion.identity();
+      } else if (Math.abs(transformSpace.rank1Direction.z) > 0.9 && 
+                Math.abs(transformSpace.rank1Direction.x) < 0.1 && 
+                Math.abs(transformSpace.rank1Direction.y) < 0.1) {
+        // Z-axis case, use direct orientation
+        console.log("Using direct Z-axis orientation");
+        // We'll rotate 90 degrees around X to go from Y to Z
+        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
+      } else {
+        // General case
+        quaternion.setFromUnitVectors(startVec, transformSpace.rank1Direction);
+      }
     }
     
     if (matrixRank === 1) {
       // Rank 1: Line visualization (1D)
       return (
         <group quaternion={quaternion.toArray()}>
+          {/* Show cylinder along the direction */}
           <mesh>
             <cylinderGeometry args={[0.1, 0.1, size * 2, 16]} />
             <meshStandardMaterial color="#7F00FF" transparent opacity={0.3} />
+          </mesh>
+          
+          {/* Add small spheres at each end to make direction more visible */}
+          <mesh position={[0, size, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial color="#7F00FF" transparent opacity={0.5} />
+          </mesh>
+          <mesh position={[0, -size, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial color="#7F00FF" transparent opacity={0.5} />
           </mesh>
         </group>
       );
