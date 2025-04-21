@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useVectorStore } from "../lib/stores/useVectorStore";
 import { evaluateExpression } from "../lib/mathParser";
 import { Button } from "./ui/button";
@@ -404,13 +404,15 @@ const VectorInput = () => {
                   
                   {/* Vector components */}
                   <div className="grid grid-cols-3 gap-2">
-                    {vector.components.map((value, index) => (
+                    {vector.components.map((value: number, index) => (
                       <div key={index}>
                         <Label>{index === 0 ? 'X' : index === 1 ? 'Y' : 'Z'}</Label>
                         <Input
                           type="text"
                           // Show the original expression if available, otherwise the numeric value
-                          value={(vector.componentExpressions && vector.componentExpressions[index]) || value.toString()}
+                          // Display the formatted value with 2 decimal places to match the 3D display format
+                          value={(vector.componentExpressions && vector.componentExpressions[index]) || 
+                                  value.toFixed(2).replace(/\.?0+$/, '')}
                           onChange={(e) => {
                             // Get the input value
                             let expressionValue = e.target.value;

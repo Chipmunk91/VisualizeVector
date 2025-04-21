@@ -123,10 +123,16 @@ const Vector = ({ vector }: VectorProps) => {
         }
         
         // Round to 2 decimal places for cleaner display
-        newComponents = newComponents.map(val => Math.round(val * 100) / 100);
+        const roundedComponents = newComponents.map(val => Math.round(val * 100) / 100);
         
-        // Update vector in store
-        updateVector(vector.id, newComponents);
+        // Also update the expressions to match the new numeric values
+        // This ensures the input fields update properly when vectors are dragged
+        const newExpressions = roundedComponents.map(val => val.toFixed(2));
+        
+        // Update each component in the vector with its new expression
+        for (let i = 0; i < roundedComponents.length; i++) {
+          updateVector(vector.id, roundedComponents, newExpressions[i], i);
+        }
       }
     }
   });
