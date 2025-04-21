@@ -19,6 +19,7 @@ interface MatrixStore {
   toggleShowTransformed: () => void;
   toggleDimensionVisualization: () => void;
   transposeMatrix: () => void;
+  resetMatrix: () => void; // New function to reset matrix to identity
 }
 
 const createEmptyMatrix = (dimension: MatrixDimension): number[][] => {
@@ -189,6 +190,68 @@ export const useMatrixStore = create<MatrixStore>((set) => ({
           values: transposedValues,
           dimension: newDimension,
           expressions: transposedExpressions,
+        }
+      };
+    });
+  },
+  
+  // Reset matrix to identity based on current dimension
+  resetMatrix: () => {
+    set((state) => {
+      const dimension = state.matrix.dimension;
+      const [rows, cols] = dimension.split('x').map(Number);
+      
+      // Create identity matrix for current dimension
+      let newValues: number[][];
+      let newExpressions: string[][];
+      
+      // Different handling for square and non-square matrices
+      if (dimension === '2x2' || dimension === '3x3') {
+        // True identity matrix for square matrices
+        newValues = createIdentityMatrix(dimension);
+        newExpressions = Array(rows).fill(0).map((_, i) => 
+          Array(cols).fill(0).map((_, j) => i === j ? '1' : '0')
+        );
+      } 
+      else if (dimension === '2x3') {
+        // For 2x3, use [[1,0,0],[0,1,0]]
+        newValues = [
+          [1, 0, 0],
+          [0, 1, 0]
+        ];
+        newExpressions = [
+          ['1', '0', '0'],
+          ['0', '1', '0']
+        ];
+      } 
+      else if (dimension === '3x2') {
+        // For 3x2, use [[1,0],[0,1],[0,0]]
+        newValues = [
+          [1, 0],
+          [0, 1],
+          [0, 0]
+        ];
+        newExpressions = [
+          ['1', '0'],
+          ['0', '1'],
+          ['0', '0']
+        ];
+      }
+      else {
+        // Fallback to identity for any other dimensions
+        newValues = createIdentityMatrix(dimension);
+        newExpressions = Array(rows).fill(0).map((_, i) => 
+          Array(cols).fill(0).map((_, j) => i === j ? '1' : '0')
+        );
+      }
+      
+      console.log(`Reset matrix to identity for ${dimension} dimension`);
+      
+      return {
+        matrix: {
+          values: newValues,
+          dimension,
+          expressions: newExpressions,
         }
       };
     });
