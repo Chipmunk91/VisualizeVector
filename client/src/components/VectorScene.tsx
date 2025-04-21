@@ -501,12 +501,37 @@ const VectorScene = () => {
       );
     } else if (matrixRank === 3) {
       // Rank 3: Space visualization (3D)
-      // Using very low opacity to ensure vectors remain clearly visible
+      // Using wireframe instead of solid for better visibility
       return (
-        <mesh>
-          <boxGeometry args={[size * 2, size * 2, size * 2]} />
-          <meshStandardMaterial color="#FF6347" transparent opacity={0.05} />
-        </mesh>
+        <group>
+          {/* Main box with very low opacity */}
+          <mesh>
+            <boxGeometry args={[size * 2, size * 2, size * 2]} />
+            <meshStandardMaterial 
+              color="#FF6347" 
+              transparent={true} 
+              opacity={0.02} 
+              side={THREE.DoubleSide} 
+            />
+          </mesh>
+          
+          {/* Wireframe for better visibility */}
+          <mesh>
+            <boxGeometry args={[size * 2, size * 2, size * 2]} />
+            <meshStandardMaterial 
+              color="#FF6347" 
+              wireframe={true} 
+              transparent={true} 
+              opacity={0.2} 
+            />
+          </mesh>
+          
+          {/* Box edges for clarity */}
+          <lineSegments>
+            <edgesGeometry args={[new THREE.BoxGeometry(size * 2, size * 2, size * 2)]} />
+            <lineBasicMaterial color="#FF6347" />
+          </lineSegments>
+        </group>
       );
     }
     
