@@ -510,8 +510,10 @@ const VectorScene = () => {
             <meshStandardMaterial 
               color="#FF6347" 
               transparent={true} 
-              opacity={0.02} 
+              opacity={0.01} 
               side={THREE.DoubleSide} 
+              depthWrite={false}  // Don't write to depth buffer (allows things inside to be visible)
+              depthTest={false}   // Don't use depth testing (prevents hiding other objects)
             />
           </mesh>
           
@@ -522,14 +524,20 @@ const VectorScene = () => {
               color="#FF6347" 
               wireframe={true} 
               transparent={true} 
-              opacity={0.2} 
+              opacity={0.2}
+              depthWrite={false}  // Don't write to depth buffer
+              depthTest={false}   // Don't use depth testing
             />
           </mesh>
           
           {/* Box edges for clarity */}
-          <lineSegments>
+          <lineSegments renderOrder={1000}> {/* Higher render order to ensure it's drawn on top */}
             <edgesGeometry args={[new THREE.BoxGeometry(size * 2, size * 2, size * 2)]} />
-            <lineBasicMaterial color="#FF6347" />
+            <lineBasicMaterial 
+              color="#FF6347" 
+              transparent={false}
+              depthTest={false}
+            />
           </lineSegments>
         </group>
       );
