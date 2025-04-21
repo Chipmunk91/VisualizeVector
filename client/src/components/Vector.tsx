@@ -10,11 +10,19 @@ interface VectorProps {
 }
 
 const Vector = ({ vector }: VectorProps) => {
-  const { updateVector } = useVectorStore();
+  const { updateVector, vectors } = useVectorStore();
   const { camera, mouse } = useThree();
   
   const components = vector.components;
   const isTransformed = vector.isTransformed;
+  
+  // If this is a transformed vector, get the original vector for comparison
+  const originalVector = useMemo(() => {
+    if (isTransformed && vector.originalId) {
+      return vectors.find(v => v.id === vector.originalId);
+    }
+    return null;
+  }, [isTransformed, vector.originalId, vectors]);
   
   // Create refs for interactive elements
   const arrowHeadRef = useRef<THREE.Mesh>(null);
@@ -284,22 +292,57 @@ const Vector = ({ vector }: VectorProps) => {
         />
       </mesh>
       
-      {/* Only show labels for non-transformed vectors */}
-      {vector.visible && !isTransformed && (
-        <Text
-          position={[end.x, end.y + 0.5, end.z]}
-          fontSize={0.4}
-          color={vector.color}
-          anchorX="center"
-          anchorY="bottom"
-          fillOpacity={opacity}
-          outlineWidth={0.05}
-          outlineColor="#222222"
-          outlineOpacity={opacity * 0.8}
-          quaternion={camera.quaternion}
-        >
-          {vector.label}
-        </Text>
+      {/* Labels for all vectors */}
+      {vector.visible && (
+        <>
+          <Text
+            position={[end.x, end.y + 0.5, end.z]}
+            fontSize={0.4}
+            color={vector.color}
+            anchorX="center"
+            anchorY="bottom"
+            fillOpacity={opacity}
+            outlineWidth={0.05}
+            outlineColor="#222222"
+            outlineOpacity={opacity * 0.8}
+            quaternion={camera.quaternion}
+          >
+            {vector.label}
+          </Text>
+          
+          {/* 
+            Show coordinates for original vectors, and for transformed vectors
+            only if they are different from the original vector
+          */}
+          {(() => {
+            // Check if this is a transformed vector with the same components as the original
+            const showCoordinates = !isTransformed || !originalVector || !components.every(
+              (val, idx) => Math.abs(val - originalVector.components[idx]) < 0.001
+            );
+            
+            // Only show coordinates if they're meaningful
+            if (showCoordinates) {
+              return (
+                <Text
+                  position={[end.x, end.y + 0.2, end.z]}
+                  fontSize={0.25}
+                  color={vector.color}
+                  anchorX="center"
+                  anchorY="bottom"
+                  fillOpacity={opacity * 0.9}
+                  outlineWidth={0.03}
+                  outlineColor="#222222"
+                  outlineOpacity={opacity * 0.7}
+                  quaternion={camera.quaternion}
+                >
+                  {`(${components.map(c => c.toFixed(1)).join(', ')})`}
+                </Text>
+              );
+            }
+            
+            return null;
+          })()}
+        </>
       )}
     </group>
   );
