@@ -335,20 +335,28 @@ const Vector = ({ vector }: VectorProps) => {
               return null;
             }
             
-            // For transformed vectors, we always want to show coordinates unless:
-            // - The transformed vector is identical to the original
+            // For transformed vectors, we need special handling for dimension changes
             const { matrix } = useMatrixStore();
+            
+            // Function to check if components differ in dimension or values
+            const areComponentsDifferent = () => {
+              // If no original vector, components are different
+              if (!originalVector) return true;
+              
+              // If dimensions are different (like 3D to 2D), components are different
+              if (components.length !== originalVector.components.length) return true;
+              
+              // Check each component value
+              return !components.every((val, idx) => 
+                originalVector.components[idx] !== undefined && 
+                Math.abs(val - originalVector.components[idx]) < 0.001
+              );
+            };
             
             // Show coordinates if:
             // - Not a transformed vector, OR
-            // - Vector is transformed AND one of:
-            //   - No original vector found, OR
-            //   - Components are different from original (i.e., it's actually transformed)
-            const showCoordinates = !isTransformed || 
-              (isTransformed && (!originalVector || !components.every(
-                (val, idx) => originalVector.components[idx] !== undefined && 
-                Math.abs(val - originalVector.components[idx]) < 0.001
-              )));
+            // - Is a transformed vector with different components from original
+            const showCoordinates = !isTransformed || (isTransformed && areComponentsDifferent());
             
             // Only show coordinates if they're meaningful
             if (showCoordinates) {
