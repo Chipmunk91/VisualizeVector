@@ -99,10 +99,22 @@ const VectorAnalysis = () => {
                         <p>{calculateMagnitude(transformedVector.components).toFixed(4)}</p>
                       </div>
                       
-                      <div className="bg-muted p-2 rounded-md sm:col-span-2">
+                      <div className="bg-muted p-2 rounded-md">
                         <p className="font-medium">Distance from Original:</p>
                         <p>
                           {vectorDistance(vector.components, transformedVector.components)?.toFixed(4) || "N/A"}
+                        </p>
+                      </div>
+                      
+                      <div className="bg-muted p-2 rounded-md">
+                        <p className="font-medium">Angle with Original:</p>
+                        <p>
+                          {(() => {
+                            const angle = angleBetweenVectors(vector.components, transformedVector.components);
+                            if (angle === null) return "N/A";
+                            // Convert radians to degrees and format
+                            return `${(angle * (180 / Math.PI)).toFixed(2)}°`;
+                          })()}
                         </p>
                       </div>
                     </>

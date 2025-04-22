@@ -335,20 +335,19 @@ const Vector = ({ vector }: VectorProps) => {
               return null;
             }
             
-            // For transformed vectors:
-            // 1. Don't show coordinates if vector is the same as the original
-            // 2. Check if matrix is an identity matrix (this will be used in the next condition)
+            // For transformed vectors, we always want to show coordinates unless:
+            // - The transformed vector is identical to the original
             const { matrix } = useMatrixStore();
-            const isIdentity = isIdentityMatrix(matrix.values);
             
-            // Show coordinates only if:
+            // Show coordinates if:
             // - Not a transformed vector, OR
-            // - Matrix is not identity, AND one of:
+            // - Vector is transformed AND one of:
             //   - No original vector found, OR
-            //   - Components are different from original
+            //   - Components are different from original (i.e., it's actually transformed)
             const showCoordinates = !isTransformed || 
-              (!isIdentity && (!originalVector || !components.every(
-                (val, idx) => Math.abs(val - originalVector.components[idx]) < 0.001
+              (isTransformed && (!originalVector || !components.every(
+                (val, idx) => originalVector.components[idx] !== undefined && 
+                Math.abs(val - originalVector.components[idx]) < 0.001
               )));
             
             // Only show coordinates if they're meaningful
