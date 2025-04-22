@@ -4,6 +4,7 @@ import {
   calculateDeterminant,
   calculateTrace,
   calculateEigenvalues,
+  calculateEigenvectors,
   calculateSingularValues,
   isMatrixInvertible
 } from "../lib/math";
@@ -20,6 +21,7 @@ const MatrixAnalysis = () => {
   const determinant = isSquare ? calculateDeterminant(matrix) : null;
   const trace = isSquare ? calculateTrace(matrix) : null;
   const eigenvalues = isSquare ? calculateEigenvalues(matrix) : null;
+  const eigenvectors = isSquare && eigenvalues ? calculateEigenvectors(matrix, eigenvalues) : null;
   const singularValues = calculateSingularValues(matrix);
   const invertible = isSquare ? isMatrixInvertible(matrix) : null;
 
@@ -57,48 +59,49 @@ const MatrixAnalysis = () => {
               </div>
             </>
           )}
-          
-          {singularValues && singularValues.length > 0 && (
-            <div className="bg-muted p-3 rounded-md sm:col-span-2">
-              <p className="font-medium">Singular Values:</p>
-              <p className="break-all">[{singularValues.map(v => v.toFixed(4)).join(", ")}]</p>
-            </div>
-          )}
-          
-          {eigenvalues && eigenvalues.length > 0 && (
-            <div className="bg-muted p-3 rounded-md sm:col-span-2">
-              <p className="font-medium">Eigenvalues:</p>
-              <p className="break-all">[{eigenvalues.map(v => v.toFixed(4)).join(", ")}]</p>
-            </div>
-          )}
         </div>
         
-        {/* Matrix Visualization */}
-        <div className="mt-4">
-          <h3 className="font-medium mb-2">Matrix Visualization</h3>
-          <div className="bg-muted p-3 rounded-md flex justify-center overflow-x-auto">
-            <div className="inline-block border-2 border-border rounded-md">
-              {matrix.values.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex">
-                  {row.map((val, colIdx) => (
-                    <div 
-                      key={`${rowIdx}-${colIdx}`} 
-                      className="p-2 text-center min-w-[50px] w-[50px]"
-                      style={{
-                        // Highlight diagonal elements
-                        backgroundColor: rowIdx === colIdx ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                        // Use color intensity to represent magnitude
-                        color: `rgba(0, 0, 0, ${Math.min(0.9, Math.abs(val) * 0.2 + 0.5)})`
-                      }}
-                    >
-                      {val.toFixed(2)}
-                    </div>
-                  ))}
+        {/* Eigenvalue Decomposition */}
+        {isSquare && eigenvalues && eigenvalues.length > 0 && (
+          <div className="mt-4">
+            <h3 className="font-medium mb-2">Eigenvalue Decomposition</h3>
+            <div className="space-y-3">
+              <div className="bg-muted p-3 rounded-md">
+                <p className="font-medium">Eigenvalues:</p>
+                <p className="break-all">[{eigenvalues.map(v => v.toFixed(4)).join(", ")}]</p>
+              </div>
+              
+              {eigenvectors && eigenvectors.length > 0 && (
+                <div className="bg-muted p-3 rounded-md">
+                  <p className="font-medium">Eigenvectors (normalized):</p>
+                  <div className="space-y-2 mt-1">
+                    {eigenvectors.map((vector, idx) => (
+                      <div key={idx} className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-xs">λ = {eigenvalues[idx].toFixed(4)}:</span>
+                        <span className="break-all">[{vector.map(v => v.toFixed(4)).join(", ")}]</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        </div>
+        )}
+        
+        {/* Singular Value Decomposition */}
+        {singularValues && singularValues.length > 0 && (
+          <div className="mt-4">
+            <h3 className="font-medium mb-2">Singular Value Decomposition</h3>
+            <div className="bg-muted p-3 rounded-md">
+              <p className="font-medium">Singular Values:</p>
+              <p className="break-all">[{singularValues.map(v => v.toFixed(4)).join(", ")}]</p>
+              <div className="mt-2 text-sm text-muted-foreground">
+                <p>Singular values represent the scaling factors in each principal direction.</p>
+                <p>The number of non-zero singular values equals the rank of the matrix.</p>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Matrix Types */}
         {isSquare && (
